@@ -1,0 +1,15 @@
+[
+  {"programme":"Jal Jeevan Mission","category_code":"WATER","quantified_target":"Functional household tap connection to every rural household","sdg":[6],"target_districts":[]},
+  {"programme":"Pradhan Mantri Gram Sadak Yojana (PMGSY)","category_code":"ROADS","quantified_target":"All-weather road connectivity to all eligible habitations","sdg":[9],"target_districts":["Dahod","Dang","Narmada","Tapi","Chhota Udaipur","Aravalli","Mahisagar"]},
+  {"programme":"Swachh Bharat Mission 2.0","category_code":"SANITATION","quantified_target":"ODF+ status and safe sanitation in all villages and towns","sdg":[6],"target_districts":[]},
+  {"programme":"Swachh Bharat Mission 2.0 (Solid Waste)","category_code":"WASTE","quantified_target":"100% door-to-door collection and scientific processing in urban areas","sdg":[11,12],"target_districts":[]},
+  {"programme":"Ayushman Bharat / PM-ABHIM","category_code":"HEALTH","quantified_target":"Health & wellness centre within reach of every village; strengthen PHCs in aspirational districts","sdg":[3],"target_districts":["Dahod","Narmada","Dang","Tapi","Chhota Udaipur"]},
+  {"programme":"Samagra Shiksha","category_code":"EDUCATION","quantified_target":"Universal access and retention up to secondary level","sdg":[4],"target_districts":["Dahod","Narmada","Dang","Chhota Udaipur"]},
+  {"programme":"Saubhagya / RDSS","category_code":"ELECTRICITY","quantified_target":"Reliable 24x7 supply; reduce AT&C losses","sdg":[7],"target_districts":[]},
+  {"programme":"PMAY (Urban & Gramin)","category_code":"HOUSING","quantified_target":"Housing for all eligible households","sdg":[11],"target_districts":[]},
+  {"programme":"BharatNet / Digital India","category_code":"CONNECTIVITY","quantified_target":"Broadband to every gram panchayat","sdg":[9],"target_districts":["Dang","Narmada","Tapi","Dahod","Kutch"]},
+  {"programme":"MGNREGA","category_code":"EMPLOYMENT","quantified_target":"100 days of guaranteed wage employment per rural household","sdg":[8],"target_districts":[]},
+  {"programme":"National Disaster Management Plan","category_code":"DISASTER","quantified_target":"Cyclone and flood resilience for coastal and riverine districts","sdg":[11,13],"target_districts":["Kutch","Jamnagar","Devbhumi Dwarka","Porbandar","Gir Somnath","Amreli","Bhavnagar","Navsari","Valsad","Surat","Bharuch"]},
+  {"programme":"PM-KUSUM / PMKSY (irrigation)","category_code":"AGRI","quantified_target":"Har Khet Ko Pani — expand assured irrigation","sdg":[2],"target_districts":["Banaskantha","Kutch","Patan","Surendranagar","Vav-Tharad"]},
+  {"programme":"Aspirational Districts Programme","category_code":"WELFARE","quantified_target":"Improve socio-economic indicators in aspirational districts","sdg":[1,10],"target_districts":["Dahod","Narmada"]}
+]
