@@ -3,12 +3,17 @@ from __future__ import annotations
 
 import pandas as pd
 
-QUADRANTS = {
-    (True, False): "UNDERSERVED_GAP",     # high demand, low investment → top candidate for new investment
-    (True, True): "COVERED_MONITOR",      # high demand, high investment → verify delivery, track impact
-    (False, False): "STABLE",             # low demand, low investment → no action
-    (False, True): "POSSIBLE_MISMATCH",   # low demand, high investment → review allocation
-}
+# Thresholds are deliberately asymmetric: a "possible mismatch" is a serious claim, so it needs clearly low demand
+# AND clearly high spending. Everything in between is BALANCED.
+HIGH_DEMAND, LOW_INVEST, LOW_DEMAND, HIGH_INVEST = 0.60, 0.40, 0.35, 0.75
+
+
+def quadrant(demand_rank: float, invest_rank: float, unique_citizens: int) -> str:
+    if unique_citizens > 0 and demand_rank >= HIGH_DEMAND:
+        return "UNDERSERVED_GAP" if invest_rank <= LOW_INVEST else "COVERED_MONITOR"   # high demand: is money there?
+    if demand_rank <= LOW_DEMAND and invest_rank >= HIGH_INVEST:
+        return "POSSIBLE_MISMATCH"                                                      # low demand, heavy spending → review
+    return "BALANCED"
 
 
 def add_alignment(df: pd.DataFrame) -> pd.DataFrame:
@@ -20,8 +25,5 @@ def add_alignment(df: pd.DataFrame) -> pd.DataFrame:
     df["demand_rank"] = df.groupby("category_code")["demand_pressure"].rank(pct=True)
     df["invest_rank"] = df.groupby("category_code")["invest_per_capita_inr"].rank(pct=True)
     df["misalignment_index"] = ((df["demand_rank"] - df["invest_rank"]) * 100).round(1)
-    df["alignment_quadrant"] = [
-        QUADRANTS[(dr >= 0.5, ir >= 0.5)] if uc > 0 else ("POSSIBLE_MISMATCH" if ir >= 0.75 else "STABLE")
-        for dr, ir, uc in zip(df["demand_rank"], df["invest_rank"], df["unique_citizens"])
-    ]
+    df["alignment_quadrant"] = [quadrant(dr, ir, uc) for dr, ir, uc in zip(df["demand_rank"], df["invest_rank"], df["unique_citizens"])]
     return df
