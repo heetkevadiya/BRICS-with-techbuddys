@@ -11,7 +11,7 @@ HIGH_DEMAND, LOW_INVEST, LOW_DEMAND, HIGH_INVEST = 0.60, 0.40, 0.35, 0.75
 def quadrant(demand_rank: float, invest_rank: float, unique_citizens: int) -> str:
     if unique_citizens > 0 and demand_rank >= HIGH_DEMAND:
         return "UNDERSERVED_GAP" if invest_rank <= LOW_INVEST else "COVERED_MONITOR"   # high demand: is money there?
-    if demand_rank <= LOW_DEMAND and invest_rank >= HIGH_INVEST:
+    if demand_rank <= LOW_DEMAND and invest_rank >= HIGH_INVEST and invest_rank - demand_rank >= 0.6:
         return "POSSIBLE_MISMATCH"                                                      # low demand, heavy spending → review
     return "BALANCED"
 
