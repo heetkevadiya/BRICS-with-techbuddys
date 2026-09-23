@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from app.analytics.aggregation import integrated_frame
 from app.analytics.alignment import add_alignment
 from app.analytics.hotspots import add_hotspot_score
-from app.models import Category, Recommendation, RecommendationType
+from app.models import GeographicEntity, Recommendation, RecommendationType
 from app.services import priority_service
 from app.services.ai import gemini_client
 
@@ -60,7 +60,7 @@ def _evidence(row) -> dict:
         "connectivity_factor": round(float(row["connectivity_factor"]), 2), "channels_used": int(row["channels"]),
         "clusters": int(row["cluster_count"]), "avg_urgency": round(float(row["avg_urgency"]), 1), "max_urgency": int(row["max_urgency"]),
         "growth_30d_pct": round(float(row["growth_pct"]), 1), "population": int(row["population"]),
-        "affected_population": int(row["affected_population"]),
+        "people_directly_represented": int(row["affected_population"]),
         "infrastructure_index": round(float(row["infra_index"]), 1) if pd.notna(row["infra_index"]) else None,
         "infrastructure_gap": round(float(row["infra_gap"]), 1),
         "allocated_inr_cr": round(float(row["allocated_inr"]) / 1e7, 2), "invest_per_capita_inr": round(float(row["invest_per_capita_inr"]), 1),
@@ -93,6 +93,8 @@ def explain_with_gemini(rec: Recommendation) -> str:
     ev = rec.evidence
     prompt = f"""You are writing a 3-sentence briefing for a senior policymaker in India.
 Use ONLY the facts in the JSON below. Do not add any number, place or claim that is not in it.
+`people_directly_represented` is only the households behind the reports, NOT the size of the affected area — quote the
+district `population` when you need a scale figure, and never call people_directly_represented "the affected population".
 State: what citizens report, why it matters (gap, population, urgency), and what the recommended action is and why
 (especially whether an existing project should be accelerated rather than duplicated). Plain English, no bullet points.
 
@@ -114,7 +116,10 @@ def recompute(db: Session, state_id: int, *, explain_top_n: int = TOP_N_EXPLAIN)
     keep = (df["unique_citizens"] >= MIN_CITIZENS) | (df["alignment_quadrant"] == "POSSIBLE_MISMATCH")
     df = df[keep].sort_values("priority_score", ascending=False)
 
-    db.query(Recommendation).filter_by(is_current=True).update({"is_current": False})
+    # Only this state's recommendations are superseded: another state's stay current (multi-state deployment).
+    state_geo_ids = [g.id for g in db.query(GeographicEntity.id).filter_by(parent_id=state_id)]
+    db.query(Recommendation).filter(Recommendation.is_current.is_(True), Recommendation.geo_id.in_(state_geo_ids)).update(
+        {"is_current": False}, synchronize_session=False)
     now = datetime.now(timezone.utc)
     out: list[Recommendation] = []
     for _, row in df.iterrows():
@@ -132,14 +137,18 @@ def recompute(db: Session, state_id: int, *, explain_top_n: int = TOP_N_EXPLAIN)
         )
         db.add(rec)
         out.append(rec)
-    db.flush()
+    # Commit the deterministic result first. Gemini explanations are slow, and holding this transaction open
+    # across those calls would block every other write to the recommendations table.
+    db.commit()
+
     for rec in out[:explain_top_n]:
         try:
-            rec.explanation = explain_with_gemini(rec)
-            rec.explanation_model = gemini_client.model_name()
+            explanation = explain_with_gemini(rec)
         except Exception:  # keep the deterministic explanation if the LLM is unavailable
-            pass
-    db.commit()
+            continue
+        rec.explanation = explanation
+        rec.explanation_model = gemini_client.model_name()
+        db.commit()
     return out
 
 

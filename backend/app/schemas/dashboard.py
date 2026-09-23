@@ -33,7 +33,7 @@ class HotspotOut(BaseModel):
     avg_urgency: float
     growth_pct: float
     population: int
-    affected_population: int
+    people_directly_represented: int
     infra_index: float | None
     infra_gap: float
     allocated_inr_cr: float

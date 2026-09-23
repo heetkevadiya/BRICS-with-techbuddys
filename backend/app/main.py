@@ -32,5 +32,6 @@ for r in (requests.router, dashboard.router, recommendations.router, datasets.ro
 
 
 @app.get("/health", tags=["system"])
+@app.get("/api/health", include_in_schema=False)
 def health() -> dict:
     return {"status": "ok", "env": settings.app_env, "model": settings.gemini_model}

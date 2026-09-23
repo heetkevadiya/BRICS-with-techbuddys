@@ -49,7 +49,7 @@ def demand_by_district_category(db: Session, state_id: int, now: datetime | None
             func.sum(case((CitizenRequest.submitted_at >= d30, 1), else_=0)).label("last_30d"),
             func.sum(case(((CitizenRequest.submitted_at >= d60) & (CitizenRequest.submitted_at < d30), 1), else_=0)).label("prev_30d"),
             func.count(func.distinct(CitizenRequest.channel)).label("channels"),
-            func.sum(func.coalesce(CitizenRequest.affected_population_estimate, 0)).label("affected_claimed"),
+
             func.count(func.distinct(CitizenRequest.cluster_id)).label("cluster_count"),
         )
         .join(GeographicEntity, GeographicEntity.id == CitizenRequest.resolved_geo_id)
@@ -64,7 +64,7 @@ def demand_by_district_category(db: Session, state_id: int, now: datetime | None
     demand = pd.DataFrame([dict(r._mapping) for r in base.all()])
     if demand.empty:
         demand = pd.DataFrame(columns=["geo_id", "category_code", "request_count", "unique_citizens", "avg_urgency", "max_urgency",
-                                       "last_30d", "prev_30d", "channels", "affected_claimed", "cluster_count"])
+                                       "last_30d", "prev_30d", "channels", "cluster_count"])
     return demand
 
 
@@ -109,7 +109,7 @@ def integrated_frame(db: Session, state_id: int, now: datetime | None = None) ->
         return gov
     demand = demand_by_district_category(db, state_id, now)
     df = gov.merge(demand, on=["geo_id", "category_code"], how="left")
-    for col in ("request_count", "unique_citizens", "last_30d", "prev_30d", "channels", "affected_claimed", "cluster_count"):
+    for col in ("request_count", "unique_citizens", "last_30d", "prev_30d", "channels", "cluster_count"):
         df[col] = df[col].fillna(0).astype(int)
     df["avg_urgency"] = df["avg_urgency"].astype(float).fillna(0.0)
     df["max_urgency"] = df["max_urgency"].astype(float).fillna(0.0)
@@ -132,9 +132,9 @@ def integrated_frame(db: Session, state_id: int, now: datetime | None = None) ->
     )
     df["infra_gap"] = (100 - df["infra_index"].astype(float)).clip(lower=0, upper=100)
     df["invest_per_capita_inr"] = df["allocated_inr"] / df["population"]
-    df["affected_population"] = df.apply(
-        lambda r: int(min(r["population"], max(r["unique_citizens"] * HOUSEHOLD_SIZE, r["affected_claimed"]))), axis=1
-    )
+    # People directly represented by the citizens who reported. Deliberately NOT the sum of the model's
+    # per-request population guesses: those overlap heavily and summing them double-counts.
+    df["affected_population"] = (df["unique_citizens"] * HOUSEHOLD_SIZE).clip(upper=df["population"]).astype(int)
     return df
 
 

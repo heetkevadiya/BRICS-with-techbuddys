@@ -24,7 +24,7 @@ def _hotspot_rows(df) -> list[HotspotOut]:
         geo_id=int(r.geo_id), district=r.district, category_code=r.category_code, category=r.category,
         requests=int(r.request_count), unique_citizens=int(r.unique_citizens), per_1000=round(float(r.per_1000), 2),
         adjusted_per_1000=round(float(r.adjusted_per_1000), 2), avg_urgency=round(float(r.avg_urgency), 1),
-        growth_pct=round(float(r.growth_pct), 1), population=int(r.population), affected_population=int(r.affected_population),
+        growth_pct=round(float(r.growth_pct), 1), population=int(r.population), people_directly_represented=int(r.affected_population),
         infra_index=float(r.infra_index) if r.infra_index == r.infra_index else None, infra_gap=float(r.infra_gap),
         allocated_inr_cr=round(float(r.allocated_inr) / 1e7, 2), alignment_quadrant=r.alignment_quadrant,
         existing_project=r.existing_project_name, existing_project_status=r.existing_project_status,
