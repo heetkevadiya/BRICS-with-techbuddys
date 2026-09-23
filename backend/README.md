@@ -13,7 +13,7 @@ python3.12 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env            # fill GEMINI_API_KEY etc.
 createdb brics && psql brics -c "CREATE EXTENSION IF NOT EXISTS postgis;"
-uvicorn app.main:app --reload    # http://localhost:8000/docs
+python app.py                    # http://localhost:8000/docs
 pytest
 ```
 
