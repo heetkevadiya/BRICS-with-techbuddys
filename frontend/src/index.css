@@ -1,1 +1,47 @@
 @import "tailwindcss";
+
+/* ── Design tokens ────────────────────────────────────────────────────────────
+   Validated with the data-viz palette validator (light surface #fcfcfb):
+   · diverging poles blue↔red — CVD ΔE 23.8, normal-vision ΔE 31.6 (both PASS)
+   · each arm is monotone and single-hue
+   · sequential = one blue hue, light→dark, for magnitude (map, bars)
+   Status colours are reserved and always ship with an icon + text label.
+   ──────────────────────────────────────────────────────────────────────────── */
+:root {
+  color-scheme: light;
+
+  /* surfaces & ink */
+  --surface:        #fcfcfb;
+  --page:           #f7f7f5;
+  --ink:            #0b0b0b;
+  --ink-2:          #52514e;
+  --ink-muted:      #898781;
+  --grid:           #e1e0d9;
+  --axis:           #c3c2b7;
+  --hairline:       rgb(11 11 11 / 0.10);
+
+  /* sequential blue ramp — magnitude */
+  --blue-100: #cde2fb;  --blue-250: #86b6ef;  --blue-400: #3987e5;
+  --blue-450: #2a78d6;  --blue-550: #1c5cab;  --blue-700: #0d366b;
+
+  /* diverging: underserved (red) ← balanced (gray) → overspent (blue) */
+  --div-neg:  #d03b3b;
+  --div-mid:  #f0efec;
+  --div-pos:  #2a78d6;
+
+  /* status — never used as a series colour, always with an icon + label */
+  --status-critical: #d03b3b;
+  --status-warning:  #fab219;
+  --status-good:     #0ca30c;
+  --status-neutral:  #898781;
+}
+
+body {
+  background: var(--page);
+  color: var(--ink);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* tabular figures everywhere a number is compared down a column */
+.tnum { font-variant-numeric: tabular-nums; }

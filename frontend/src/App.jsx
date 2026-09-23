@@ -1,30 +1,44 @@
+/** App shell. Three audiences, three screens; the tab also sets the demo role sent to the API.
+ *  In production a Firebase ID token carries the role instead and this switcher disappears. */
 import { BrowserRouter, Link, Navigate, Route, Routes, useLocation } from 'react-router-dom'
-import { getRole, setRole } from './services/api'
+import CampaignIcon from '@mui/icons-material/Campaign'
+import FactCheckIcon from '@mui/icons-material/FactCheck'
+import InsightsIcon from '@mui/icons-material/Insights'
+import { getRole } from './services/api'
 import CitizenPage from './pages/citizen/CitizenPage'
 import AnalystPage from './pages/analyst/AnalystPage'
 import PolicymakerPage from './pages/policymaker/PolicymakerPage'
+import { COLOR } from './theme'
 
 const TABS = [
-  { to: '/citizen', label: 'Citizen', role: 'citizen' },
-  { to: '/analyst', label: 'Analyst', role: 'analyst' },
-  { to: '/policymaker', label: 'Policymaker', role: 'policymaker' },
+  { to: '/citizen', label: 'Citizen', icon: CampaignIcon, blurb: 'report a problem' },
+  { to: '/analyst', label: 'Analyst', icon: FactCheckIcon, blurb: 'check the AI' },
+  { to: '/policymaker', label: 'Policymaker', icon: InsightsIcon, blurb: 'decide what to fund' },
 ]
 
 function Nav() {
   const { pathname } = useLocation()
   return (
-    <nav className="sticky top-0 z-10 border-b border-slate-200 bg-white/90 backdrop-blur">
-      <div className="mx-auto flex max-w-[1500px] items-center gap-6 px-4 py-2.5">
-        <span className="text-sm font-semibold text-slate-900">Citizen Demand → Development Priorities</span>
+    <nav className="sticky top-0 z-20 border-b bg-white/95 backdrop-blur" style={{ borderColor: COLOR.grid }}>
+      <div className="mx-auto flex max-w-[1500px] flex-wrap items-center gap-x-6 gap-y-2 px-4 py-2.5">
+        <span className="text-sm font-semibold" style={{ color: COLOR.ink }}>
+          Citizen Demand <span style={{ color: COLOR.muted }}>→</span> Development Priorities
+        </span>
         <div className="flex gap-1">
-          {TABS.map((t) => (
-            <Link key={t.to} to={t.to} onClick={() => setRole(t.role)}
-              className={`rounded-lg px-3 py-1.5 text-sm ${pathname.startsWith(t.to) ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
-              {t.label}
-            </Link>
-          ))}
+          {TABS.map(({ to, label, icon: Icon, blurb }) => {
+            const active = pathname.startsWith(to)
+            return (
+              <Link key={to} to={to} title={blurb}
+                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition"
+                style={active ? { background: COLOR.seq[3], color: '#fff' } : { color: COLOR.ink2 }}>
+                <Icon sx={{ fontSize: 17 }} />{label}
+              </Link>
+            )
+          })}
         </div>
-        <span className="ml-auto text-xs text-slate-400">role: {getRole()}</span>
+        <span className="ml-auto text-xs" style={{ color: COLOR.muted }}>
+          viewing as <b style={{ color: COLOR.ink2 }}>{getRole()}</b>
+        </span>
       </div>
     </nav>
   )
@@ -33,14 +47,18 @@ function Nav() {
 export default function App() {
   return (
     <BrowserRouter>
-      <div className="min-h-screen bg-slate-50 text-slate-900">
+      <div className="min-h-screen" style={{ background: COLOR.page, color: COLOR.ink }}>
         <Nav />
         <Routes>
           <Route path="/" element={<Navigate to="/citizen" replace />} />
           <Route path="/citizen" element={<CitizenPage />} />
           <Route path="/analyst" element={<AnalystPage />} />
           <Route path="/policymaker" element={<PolicymakerPage />} />
+          <Route path="*" element={<Navigate to="/citizen" replace />} />
         </Routes>
+        <footer className="mx-auto max-w-[1500px] px-4 py-6 text-center text-xs" style={{ color: COLOR.muted }}>
+          AI understands the messages · deterministic code calculates every score · people make the decisions
+        </footer>
       </div>
     </BrowserRouter>
   )

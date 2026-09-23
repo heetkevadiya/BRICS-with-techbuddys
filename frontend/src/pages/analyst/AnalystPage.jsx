@@ -1,9 +1,23 @@
+/** Analyst interface — the human check on the AI.
+ *  The citizen's original words sit beside every AI-derived field, and every edit is written to an audit trail. */
 import { useState } from 'react'
+import FactCheckIcon from '@mui/icons-material/FactCheck'
+import FilterAltIcon from '@mui/icons-material/FilterAlt'
+import CheckCircleIcon from '@mui/icons-material/CheckCircle'
+import EditIcon from '@mui/icons-material/Edit'
+import BlockIcon from '@mui/icons-material/Block'
+import RefreshIcon from '@mui/icons-material/Refresh'
+import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver'
+import SmartToyIcon from '@mui/icons-material/SmartToy'
+import InboxIcon from '@mui/icons-material/Inbox'
 import { api } from '../../services/api'
 import { useApi } from '../../hooks/useApi'
-import { Badge, Card, ErrorBox, Spinner, num } from '../../components/ui'
+import { Panel, StatusChip, Chip, ErrorBox, Spinner, Empty, Explain } from '../../components/ui'
+import { num } from '../../format'
+import { COLOR } from '../../theme'
 
-const STATUS_TONE = { PROCESSED: 'green', REVIEW_REQUIRED: 'amber', FAILED: 'rose', PROCESSING: 'blue', RECEIVED: 'slate' }
+const STATUS_TONE = { PROCESSED: 'good', REVIEW_REQUIRED: 'warning', FAILED: 'critical', PROCESSING: 'neutral', RECEIVED: 'neutral', LANGUAGE_UNSUPPORTED: 'warning' }
+const STATUSES = ['RECEIVED', 'PROCESSING', 'PROCESSED', 'REVIEW_REQUIRED', 'FAILED', 'LANGUAGE_UNSUPPORTED']
 
 export default function AnalystPage() {
   const [filters, setFilters] = useState({ status: 'REVIEW_REQUIRED', district: '', category: '', q: '' })
@@ -14,144 +28,190 @@ export default function AnalystPage() {
   const { data, error, loading, reload } = useApi(() => api.listRequests({ ...filters, page_size: 50 }), [JSON.stringify(filters)])
 
   const set = (k) => (e) => setFilters((f) => ({ ...f, [k]: e.target.value }))
+  const select = 'rounded-lg border px-3 py-2 text-sm outline-none'
 
   return (
-    <div className="mx-auto max-w-[1400px] space-y-4 px-4 py-6">
-      <header className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-bold text-slate-900">Analyst review queue</h1>
-          <p className="text-sm text-slate-600">AI results are proposals. Approve, correct or reject — every change is audited.</p>
+    <div className="mx-auto max-w-[1500px] space-y-4 px-4 py-6">
+      <header>
+        <h1 className="flex items-center gap-2 text-xl font-bold" style={{ color: COLOR.ink }}>
+          <FactCheckIcon sx={{ fontSize: 22, color: COLOR.muted }} />Analyst review queue
+        </h1>
+        <div className="mt-1.5 max-w-3xl">
+          <Explain>
+            Gemini proposes a category, location and urgency for every message; it never decides. Anything below 0.60
+            confidence, with an unresolved district, or in an unsupported language lands here for a human.
+            Approving, correcting or rejecting writes the old value, the new value, your ID and your reason to the audit trail.
+          </Explain>
         </div>
-        {data && <Badge tone="blue">{num(data.total)} matching requests</Badge>}
       </header>
 
-      <Card>
+      <Panel icon={FilterAltIcon} title="Filters" actions={data && <Chip>{num(data.total)} matching</Chip>}>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <select value={filters.status} onChange={set('status')} className="rounded-lg border border-slate-300 px-3 py-2 text-sm">
+          <select value={filters.status} onChange={set('status')} className={select} style={{ borderColor: COLOR.grid }}>
             <option value="">All statuses</option>
-            {['RECEIVED', 'PROCESSING', 'PROCESSED', 'REVIEW_REQUIRED', 'FAILED'].map((s) => <option key={s}>{s}</option>)}
+            {STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ').toLowerCase()}</option>)}
           </select>
-          <select value={filters.district} onChange={set('district')} className="rounded-lg border border-slate-300 px-3 py-2 text-sm">
+          <select value={filters.district} onChange={set('district')} className={select} style={{ borderColor: COLOR.grid }}>
             <option value="">All districts</option>
             {districts.map((d) => <option key={d.id} value={d.name}>{d.name}</option>)}
           </select>
-          <select value={filters.category} onChange={set('category')} className="rounded-lg border border-slate-300 px-3 py-2 text-sm">
+          <select value={filters.category} onChange={set('category')} className={select} style={{ borderColor: COLOR.grid }}>
             <option value="">All categories</option>
             {(cats || []).map((c) => <option key={c.code} value={c.code}>{c.name}</option>)}
           </select>
-          <input value={filters.q} onChange={set('q')} placeholder="Search text…" className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+          <input value={filters.q} onChange={set('q')} placeholder="Search original or translated text…" className={select} style={{ borderColor: COLOR.grid }} />
         </div>
-      </Card>
+      </Panel>
 
       <ErrorBox error={error} />
-      <div className="grid gap-4 lg:grid-cols-[1.3fr_1fr]">
-        <Card className="overflow-hidden" title="Requests">
-          {loading ? <Spinner /> : (
-            <div className="max-h-[70vh] overflow-auto">
+
+      <div className="grid gap-4 xl:grid-cols-[1.25fr_1fr]">
+        <Panel title="Requests" explain="Confidence is Gemini's own estimate that the category, location and urgency are right.">
+          {loading ? <Spinner /> : !data?.items?.length ? <Empty icon={InboxIcon}>No requests match these filters.</Empty> : (
+            <div className="-m-4 max-h-[68vh] overflow-auto">
               <table className="w-full text-left text-sm">
-                <thead className="sticky top-0 bg-white text-xs uppercase text-slate-500">
-                  <tr><th className="py-2">Message</th><th>Category</th><th>District</th><th>Urg</th><th>Conf</th><th>Status</th></tr>
+                <thead className="sticky top-0 bg-white text-xs uppercase" style={{ color: COLOR.muted, boxShadow: `inset 0 -1px 0 ${COLOR.grid}` }}>
+                  <tr>
+                    <th className="px-4 py-2 font-medium">Citizen message</th>
+                    <th className="py-2 pr-2 font-medium">Category</th>
+                    <th className="py-2 pr-2 font-medium">District</th>
+                    <th className="py-2 pr-2 text-right font-medium">Urgency</th>
+                    <th className="py-2 pr-2 text-right font-medium">Confidence</th>
+                    <th className="py-2 pr-4 font-medium">Status</th>
+                  </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {(data?.items || []).map((r) => (
-                    <tr key={r.id} onClick={() => setSelected(r)} className={`cursor-pointer hover:bg-slate-50 ${selected?.id === r.id ? 'bg-blue-50' : ''}`}>
-                      <td className="max-w-[320px] truncate py-2 pr-2">
-                        <span className="text-slate-900">{r.original_text || r.transcript || '(voice)'}</span>
-                        <span className="ml-1 text-xs text-slate-400">{r.detected_language}</span>
+                <tbody>
+                  {data.items.map((r) => (
+                    <tr key={r.id} onClick={() => setSelected(r)}
+                      className="cursor-pointer border-t transition hover:bg-slate-50"
+                      style={{ borderColor: COLOR.grid, background: selected?.id === r.id ? `${COLOR.seq[3]}0f` : undefined }}>
+                      <td className="max-w-[300px] truncate px-4 py-2">
+                        <span style={{ color: COLOR.ink }}>{r.original_text || r.transcript || '(voice message)'}</span>
+                        <span className="ml-1.5 text-xs" style={{ color: COLOR.muted }}>{r.detected_language}</span>
                       </td>
-                      <td className="pr-2 text-slate-700">{r.category_code}</td>
-                      <td className="pr-2 text-slate-700">{r.resolved_geo?.name || '—'}</td>
-                      <td className="pr-2 tabular-nums">{r.urgency_score ?? '—'}</td>
-                      <td className="pr-2 tabular-nums">{r.ai_confidence?.toFixed(2) ?? '—'}</td>
-                      <td><Badge tone={STATUS_TONE[r.processing_status]}>{r.processing_status.replace('_', ' ').toLowerCase()}</Badge></td>
+                      <td className="py-2 pr-2" style={{ color: COLOR.ink2 }}>{r.category_code || '—'}</td>
+                      <td className="py-2 pr-2" style={{ color: COLOR.ink2 }}>{r.resolved_geo?.name || '—'}</td>
+                      <td className="tnum py-2 pr-2 text-right" style={{ color: COLOR.ink2 }}>{r.urgency_score ?? '—'}</td>
+                      <td className="tnum py-2 pr-2 text-right" style={{ color: r.ai_confidence < 0.6 ? COLOR.critical : COLOR.ink2 }}>
+                        {r.ai_confidence?.toFixed(2) ?? '—'}
+                      </td>
+                      <td className="py-2 pr-4">
+                        <StatusChip tone={STATUS_TONE[r.processing_status]}>{r.processing_status.replace(/_/g, ' ').toLowerCase()}</StatusChip>
+                      </td>
                     </tr>
                   ))}
-                  {!data?.items?.length && <tr><td colSpan={6} className="py-8 text-center text-slate-400">No requests match these filters.</td></tr>}
                 </tbody>
               </table>
             </div>
           )}
-        </Card>
+        </Panel>
 
-        {selected ? <Detail request={selected} categories={cats || []} districts={districts} onDone={(r) => { setSelected(r); reload() }} />
-          : <Card title="Detail"><p className="text-sm text-slate-500">Select a request to review the AI output beside the citizen's original words.</p></Card>}
+        {selected
+          ? <Detail key={selected.id} request={selected} categories={cats || []} districts={districts} onDone={(r) => { setSelected(r); reload() }} />
+          : <Panel title="Review detail"><Empty icon={FactCheckIcon}>Select a request to see the AI output beside the citizen's original words.</Empty></Panel>}
       </div>
     </div>
   )
 }
 
-function Detail({ request, categories, districts, onDone }) {
+function Detail({ request: r, categories, districts, onDone }) {
   const [form, setForm] = useState({})
   const [reason, setReason] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
-  const r = request
   const val = (k) => (k in form ? form[k] : r[k])
+  const dirty = Object.keys(form).length > 0
 
   async function act(action) {
     setBusy(true); setError(null)
     try {
       const corrections = action === 'CORRECT'
-        ? Object.fromEntries(Object.entries(form).map(([k, v]) => [k, k === 'urgency_score' || k === 'resolved_geo_id' ? Number(v) : v]))
+        ? Object.fromEntries(Object.entries(form).map(([k, v]) => [k, k === 'urgency_score' || k === 'resolved_geo_id' ? Number(v) || null : v]))
         : undefined
       const updated = await api.verify(r.id, { action, corrections, reason: reason || null })
       setForm({}); setReason(''); onDone(updated)
     } catch (e) { setError(e) } finally { setBusy(false) }
   }
 
+  const field = 'mt-1 w-full rounded-lg border px-2 py-1.5 text-sm outline-none'
+  const fs = { borderColor: COLOR.grid }
+  const btn = 'inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition disabled:opacity-40'
+
   return (
-    <Card title={`Request #${r.id} · ${r.tracking_code}`} actions={<Badge tone={STATUS_TONE[r.processing_status]}>{r.processing_status}</Badge>}>
+    <Panel title={`Request #${r.id} · ${r.tracking_code}`}
+      actions={<StatusChip tone={STATUS_TONE[r.processing_status]}>{r.processing_status.replace(/_/g, ' ').toLowerCase()}</StatusChip>}>
       <div className="space-y-4">
-        <div className="rounded-lg bg-slate-50 p-3">
-          <div className="text-xs font-medium uppercase text-slate-500">Citizen's original ({r.detected_language || r.declared_language || '?'}) · {r.channel}</div>
-          <p className="mt-1 text-slate-900">{r.original_text || r.transcript || '(voice only)'}</p>
-          {r.translated_text && <p className="mt-2 border-t border-slate-200 pt-2 text-sm text-slate-600">EN: {r.translated_text}</p>}
+        <div className="rounded-lg p-3" style={{ background: COLOR.page }}>
+          <div className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide" style={{ color: COLOR.muted }}>
+            <RecordVoiceOverIcon sx={{ fontSize: 14 }} />
+            Citizen's own words · {r.detected_language || r.declared_language || 'unknown'} · {r.channel.toLowerCase()}
+          </div>
+          <p className="mt-1.5" style={{ color: COLOR.ink }}>{r.original_text || r.transcript || '(voice only — no transcript yet)'}</p>
+          {r.translated_text && (
+            <p className="mt-2 border-t pt-2 text-sm" style={{ borderColor: COLOR.grid, color: COLOR.ink2 }}>
+              English: {r.translated_text}
+            </p>
+          )}
+          <p className="mt-2 text-xs" style={{ color: COLOR.muted }}>This text is never modified. Corrections below change only the AI-derived fields.</p>
         </div>
 
-        {r.processing_error && <div className="rounded-lg bg-amber-50 p-2 text-xs text-amber-800">Flagged: {r.processing_error}</div>}
+        {r.processing_error && (
+          <div className="flex items-start gap-2 rounded-lg p-2.5 text-xs" style={{ background: `${COLOR.warning}18`, color: '#7a5600' }}>
+            <span className="font-medium">Why it is here:</span> {r.processing_error}
+          </div>
+        )}
+
+        <div className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide" style={{ color: COLOR.muted }}>
+          <SmartToyIcon sx={{ fontSize: 14 }} />AI-derived — editable
+        </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
-          <label className="block"><span className="text-xs text-slate-600">Category</span>
-            <select value={val('category_code') || ''} onChange={(e) => setForm({ ...form, category_code: e.target.value })}
-              className="mt-1 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm">
+          <label className="block"><span className="text-xs" style={{ color: COLOR.ink2 }}>Category</span>
+            <select value={val('category_code') || ''} onChange={(e) => setForm({ ...form, category_code: e.target.value })} className={field} style={fs}>
               {categories.map((c) => <option key={c.code} value={c.code}>{c.name}</option>)}
             </select></label>
-          <label className="block"><span className="text-xs text-slate-600">District</span>
-            <select value={val('resolved_geo_id') || ''} onChange={(e) => setForm({ ...form, resolved_geo_id: e.target.value })}
-              className="mt-1 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm">
+          <label className="block"><span className="text-xs" style={{ color: COLOR.ink2 }}>District</span>
+            <select value={val('resolved_geo_id') || ''} onChange={(e) => setForm({ ...form, resolved_geo_id: e.target.value })} className={field} style={fs}>
               <option value="">— unresolved —</option>
               {districts.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
             </select></label>
-          <label className="block"><span className="text-xs text-slate-600">Sub-category</span>
-            <input value={val('sub_category') || ''} onChange={(e) => setForm({ ...form, sub_category: e.target.value })}
-              className="mt-1 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm" /></label>
-          <label className="block"><span className="text-xs text-slate-600">Urgency (1–10)</span>
-            <input type="number" min={1} max={10} value={val('urgency_score') ?? ''} onChange={(e) => setForm({ ...form, urgency_score: e.target.value })}
-              className="mt-1 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm" /></label>
+          <label className="block"><span className="text-xs" style={{ color: COLOR.ink2 }}>Sub-category</span>
+            <input value={val('sub_category') || ''} onChange={(e) => setForm({ ...form, sub_category: e.target.value })} className={field} style={fs} /></label>
+          <label className="block"><span className="text-xs" style={{ color: COLOR.ink2 }}>Urgency (1–10)</span>
+            <input type="number" min={1} max={10} value={val('urgency_score') ?? ''} onChange={(e) => setForm({ ...form, urgency_score: e.target.value })} className={`${field} tnum`} style={fs} /></label>
         </div>
 
-        <label className="block"><span className="text-xs text-slate-600">Problem description (AI)</span>
-          <textarea rows={2} value={val('problem_description') || ''} onChange={(e) => setForm({ ...form, problem_description: e.target.value })}
-            className="mt-1 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm" /></label>
+        <label className="block"><span className="text-xs" style={{ color: COLOR.ink2 }}>Problem description</span>
+          <textarea rows={2} value={val('problem_description') || ''} onChange={(e) => setForm({ ...form, problem_description: e.target.value })} className={field} style={fs} /></label>
 
-        <div className="flex flex-wrap gap-4 text-xs text-slate-500">
-          <span>AI confidence: <b className="text-slate-800">{r.ai_confidence?.toFixed(2) ?? '—'}</b></span>
-          <span>Model: <b className="text-slate-800">{r.ai_model || '—'}</b></span>
-          <span>Cluster: <b className="text-slate-800">{r.cluster_id ?? '—'}</b></span>
-          {r.duplicate_of_id && <span>Duplicate of #{r.duplicate_of_id}</span>}
+        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs" style={{ color: COLOR.muted }}>
+          <span>Confidence <b className="tnum" style={{ color: COLOR.ink }}>{r.ai_confidence?.toFixed(2) ?? '—'}</b></span>
+          <span>Model <b style={{ color: COLOR.ink }}>{r.ai_model || '—'}</b></span>
+          <span>Cluster <b className="tnum" style={{ color: COLOR.ink }}>{r.cluster_id ?? '—'}</b></span>
+          {r.duplicate_of_id && <span>Repeat of #{r.duplicate_of_id} — counted once</span>}
         </div>
 
-        <input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Reason (stored in the audit trail)"
-          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+        <label className="block">
+          <span className="text-xs" style={{ color: COLOR.ink2 }}>Reason (stored in the audit trail)</span>
+          <input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Why are you making this decision?" className={field} style={fs} />
+        </label>
 
         <div className="flex flex-wrap gap-2">
-          <button disabled={busy} onClick={() => act('APPROVE')} className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white disabled:opacity-40">Approve</button>
-          <button disabled={busy || !Object.keys(form).length} onClick={() => act('CORRECT')} className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white disabled:opacity-40">Save correction</button>
-          <button disabled={busy} onClick={() => act('REJECT')} className="rounded-lg bg-rose-600 px-3 py-2 text-sm font-medium text-white disabled:opacity-40">Reject</button>
-          <button disabled={busy} onClick={() => api.reprocess(r.id)} className="rounded-lg bg-white px-3 py-2 text-sm font-medium text-slate-700 ring-1 ring-slate-300">Re-run AI</button>
+          <button disabled={busy} onClick={() => act('APPROVE')} className={`${btn} text-white`} style={{ background: COLOR.good }}>
+            <CheckCircleIcon sx={{ fontSize: 17 }} />Approve
+          </button>
+          <button disabled={busy || !dirty} onClick={() => act('CORRECT')} className={`${btn} text-white`} style={{ background: COLOR.seq[3] }}>
+            <EditIcon sx={{ fontSize: 17 }} />Save correction
+          </button>
+          <button disabled={busy} onClick={() => act('REJECT')} className={`${btn} text-white`} style={{ background: COLOR.critical }}>
+            <BlockIcon sx={{ fontSize: 17 }} />Reject
+          </button>
+          <button disabled={busy} onClick={() => api.reprocess(r.id)} className={`${btn} ring-1`} style={{ background: '#fff', color: COLOR.ink2, '--tw-ring-color': COLOR.grid }}>
+            <RefreshIcon sx={{ fontSize: 17 }} />Re-run AI
+          </button>
         </div>
         <ErrorBox error={error} />
       </div>
-    </Card>
+    </Panel>
   )
 }

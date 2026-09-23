@@ -1,11 +1,33 @@
+/** Policymaker interface — the decision screen.
+ *  Every figure is traceable: the score decomposes into five weighted parts, each part into raw evidence,
+ *  and the evidence into named datasets with their dates. */
 import { useMemo, useState } from 'react'
-import { BarChart, Bar, CartesianGrid, Cell, Legend, Line, LineChart, ResponsiveContainer, Scatter, ScatterChart, Tooltip, XAxis, YAxis, ZAxis } from 'recharts'
+import { CartesianGrid, Cell, Line, LineChart, ResponsiveContainer, Scatter, ScatterChart, Tooltip, XAxis, YAxis, ZAxis } from 'recharts'
+import PublicIcon from '@mui/icons-material/Public'
+import MapIcon from '@mui/icons-material/Map'
+import AccountBalanceIcon from '@mui/icons-material/AccountBalance'
+import ShowChartIcon from '@mui/icons-material/ShowChart'
+import RecommendIcon from '@mui/icons-material/Recommend'
+import SourceIcon from '@mui/icons-material/Source'
+import GroupsIcon from '@mui/icons-material/Groups'
+import PersonPinCircleIcon from '@mui/icons-material/PersonPinCircle'
+import TrendingUpIcon from '@mui/icons-material/TrendingUp'
+import TranslateIcon from '@mui/icons-material/Translate'
+import PendingActionsIcon from '@mui/icons-material/PendingActions'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import ExpandLessIcon from '@mui/icons-material/ExpandLess'
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome'
+import ThumbUpAltIcon from '@mui/icons-material/ThumbUpAlt'
+import ScheduleIcon from '@mui/icons-material/Schedule'
+import CloseIcon from '@mui/icons-material/Close'
+import FlagIcon from '@mui/icons-material/Flag'
 import { api } from '../../services/api'
 import { useApi } from '../../hooks/useApi'
-import { Badge, Card, ErrorBox, Quadrant, REC_TYPE_LABEL, ScoreBar, Spinner, Stat, inr, num } from '../../components/ui'
+import { Panel, Stat, StatusChip, QuadrantChip, Chip, ScoreBar, Spinner, ErrorBox, Empty, Explain } from '../../components/ui'
+import { inr, num } from '../../format'
+import ChartTooltip from '../../components/Tooltip'
 import DistrictMap from '../../components/DistrictMap'
-
-const QUAD_COLOR = { UNDERSERVED_GAP: '#e11d48', COVERED_MONITOR: '#f59e0b', POSSIBLE_MISMATCH: '#7c3aed', BALANCED: '#94a3b8' }
+import { COLOR, REC_TYPE, diverging } from '../../theme'
 
 export default function PolicymakerPage() {
   const [category, setCategory] = useState('')
@@ -13,7 +35,7 @@ export default function PolicymakerPage() {
   const [openRec, setOpenRec] = useState(null)
 
   const { data: cats } = useApi(() => api.configCategories(), [])
-  const { data: summary, error: sErr, loading } = useApi(() => api.summary({}), [])
+  const { data: summary, error, loading } = useApi(() => api.summary({}), [])
   const { data: geo } = useApi(() => api.geo({ category: category || undefined }), [category])
   const { data: recs } = useApi(() => api.recommendations({ category: category || undefined, district: district?.district, limit: 30 }), [category, district?.district])
   const { data: align } = useApi(() => api.alignment({ category: category || undefined }), [category])
@@ -25,129 +47,187 @@ export default function PolicymakerPage() {
     return Object.entries(byMonth).sort().map(([month, citizens]) => ({ month, citizens }))
   }, [trends])
 
-  const scatter = useMemo(() => (align || []).filter((a) => a.unique_citizens > 0).map((a) => ({
-    x: a.adjusted_per_1000, y: a.invest_per_capita_inr, z: a.unique_citizens, ...a,
-  })), [align])
+  const scatter = useMemo(() => (align || [])
+    .filter((a) => a.unique_citizens > 0)
+    .map((a) => ({ ...a, x: a.adjusted_per_100k, y: a.invest_per_capita_inr, z: a.unique_citizens })), [align])
+
+  const categoryName = cats?.find((c) => c.code === category)?.name
 
   if (loading) return <Spinner label="Loading national overview…" />
-  if (sErr) return <div className="p-6"><ErrorBox error={sErr} /></div>
+  if (error) return <div className="p-6"><ErrorBox error={error} /></div>
 
   return (
     <div className="mx-auto max-w-[1500px] space-y-5 px-4 py-6">
-      <header className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-bold text-slate-900">{summary.state} — citizen demand & development priorities</h1>
-          <p className="text-sm text-slate-600">Every number below traces back to citizen submissions and named government datasets.</p>
+      <header className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="flex items-center gap-2 text-xl font-bold" style={{ color: COLOR.ink }}>
+            <PublicIcon sx={{ fontSize: 22, color: COLOR.muted }} />
+            {summary.state} — citizen demand and development priorities
+          </h1>
+          <div className="mt-1.5 max-w-3xl">
+            <Explain>
+              What citizens reported, joined to census population, infrastructure indices, live projects and this
+              year's budget. Scores are calculated by fixed formula — the same inputs always give the same number.
+              AI understands the messages; it never sets a priority.
+            </Explain>
+          </div>
         </div>
-        <select value={category} onChange={(e) => { setCategory(e.target.value); setOpenRec(null) }} className="rounded-lg border border-slate-300 px-3 py-2 text-sm">
+        <select value={category} onChange={(e) => { setCategory(e.target.value); setOpenRec(null) }}
+          className="rounded-lg border bg-white px-3 py-2 text-sm" style={{ borderColor: COLOR.grid }}>
           <option value="">All sectors</option>
           {(cats || []).map((c) => <option key={c.code} value={c.code}>{c.name}</option>)}
         </select>
       </header>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-        <Stat label="Citizen requests" value={num(summary.total_requests)} sub={`${num(summary.unique_citizens)} unique citizens`} />
-        <Stat label="Per 1,000 people" value={summary.per_1000_population} sub={`${summary.districts_reporting} districts reporting`} />
-        <Stat label="30-day growth" value={`${summary.growth_30d_pct > 0 ? '+' : ''}${summary.growth_30d_pct}%`} tone={summary.growth_30d_pct > 20 ? 'rose' : 'slate'} sub="vs previous 30 days" />
-        <Stat label="Languages served" value={Object.keys(summary.languages).length} sub={Object.keys(summary.languages).join(', ')} />
-        <Stat label="Awaiting analyst review" value={num(summary.review_required)} sub="low-confidence AI output" />
+        <Stat icon={GroupsIcon} label="Citizens reporting" value={num(summary.unique_citizens)} sub={`${num(summary.total_requests)} messages, repeats counted once`} />
+        <Stat icon={PersonPinCircleIcon} label="Per 100,000 people" value={summary.per_100k_population} sub={`${summary.districts_reporting} of 34 districts reporting`} />
+        <Stat icon={TrendingUpIcon} label="30-day change" value={`${summary.growth_30d_pct > 0 ? '+' : ''}${summary.growth_30d_pct}%`} delta={summary.growth_30d_pct} />
+        <Stat icon={TranslateIcon} label="Languages served" value={Object.keys(summary.languages).length} sub={Object.keys(summary.languages).join(', ')} />
+        <Stat icon={PendingActionsIcon} label="Awaiting human review" value={num(summary.review_required)} sub="low-confidence AI output" />
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[1.1fr_1fr]">
-        <Card title={`Demand map — ${category ? cats?.find((c) => c.code === category)?.name : 'all sectors'}`}
-          actions={district && <button onClick={() => setDistrict(null)} className="text-xs text-blue-600">clear {district.district}</button>}>
-          {geo ? <DistrictMap geojson={geo} metric="priority_score" selected={district?.geo_id} onSelect={setDistrict} /> : <Spinner />}
-        </Card>
+      <div className="grid gap-4 xl:grid-cols-[1.05fr_1fr]">
+        <Panel icon={MapIcon} title={`Where the need is — ${categoryName || 'all sectors'}`}
+          explain="Darker means a higher priority score. Click a district to filter the recommendations below. Pale districts have no reports yet — absence of complaints is not evidence of no problem."
+          actions={district && (
+            <button onClick={() => setDistrict(null)} className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs ring-1"
+              style={{ color: COLOR.ink2, '--tw-ring-color': COLOR.grid }}>
+              <CloseIcon sx={{ fontSize: 14 }} />{district.district}
+            </button>
+          )}>
+          {geo ? <DistrictMap geojson={geo} metric="priority_score" metricLabel="Priority" selected={district?.geo_id} onSelect={setDistrict} /> : <Spinner />}
+        </Panel>
 
         <div className="space-y-4">
-          <Card title="Investment alignment — is money going where demand is?">
-            <ResponsiveContainer width="100%" height={260}>
-              <ScatterChart margin={{ top: 8, right: 12, bottom: 24, left: 4 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis type="number" dataKey="x" name="demand" tick={{ fontSize: 11 }} label={{ value: 'citizen demand per 1,000 (adjusted)', position: 'insideBottom', offset: -14, fontSize: 11 }} />
-                <YAxis type="number" dataKey="y" name="investment" tick={{ fontSize: 11 }} label={{ value: '₹ per capita', angle: -90, position: 'insideLeft', fontSize: 11 }} />
-                <ZAxis type="number" dataKey="z" range={[20, 300]} />
-                <Tooltip content={({ payload }) => {
+          <Panel icon={AccountBalanceIcon} title="Is the money going where the need is?"
+            explain="Each dot is one district in one sector. Right = citizens report more per head. Up = more rupees budgeted per head. Colour is the gap between those two ranks: red means demand outruns spending, blue means spending outruns demand.">
+            <ResponsiveContainer width="100%" height={250}>
+              <ScatterChart margin={{ top: 8, right: 14, bottom: 26, left: 6 }}>
+                <CartesianGrid stroke={COLOR.grid} strokeDasharray="3 3" />
+                <XAxis type="number" dataKey="x" tick={{ fontSize: 11, fill: COLOR.muted }} stroke={COLOR.axis}
+                  label={{ value: 'citizens reporting per 100,000', position: 'insideBottom', offset: -16, fontSize: 11, fill: COLOR.muted }} />
+                <YAxis type="number" dataKey="y" tick={{ fontSize: 11, fill: COLOR.muted }} stroke={COLOR.axis}
+                  label={{ value: '₹ budgeted per person', angle: -90, position: 'insideLeft', fontSize: 11, fill: COLOR.muted }} />
+                <ZAxis type="number" dataKey="z" range={[30, 320]} />
+                <Tooltip cursor={{ stroke: COLOR.axis, strokeDasharray: '3 3' }} content={({ payload }) => {
                   const p = payload?.[0]?.payload
-                  return p ? <div className="rounded bg-white p-2 text-xs shadow ring-1 ring-slate-200">
-                    <b>{p.district}</b> · {p.category}<br />{p.unique_citizens} citizens · {inr(p.allocated_inr_cr)}<br />
-                    <span className="capitalize">{p.alignment_quadrant.replace(/_/g, ' ').toLowerCase()}</span>
-                  </div> : null
+                  if (!p) return null
+                  return <ChartTooltip title={p.district} subtitle={p.category}
+                    rows={[['Citizens', num(p.unique_citizens)], ['Per 100,000', p.adjusted_per_100k],
+                      ['Budgeted', inr(p.allocated_inr_cr)], ['Gap in ranks', `${p.misalignment_index > 0 ? '+' : ''}${p.misalignment_index}`]]}
+                    footer={<QuadrantChip value={p.alignment_quadrant} />} />
                 }} />
-                <Scatter data={scatter}>
-                  {scatter.map((p, i) => <Cell key={i} fill={QUAD_COLOR[p.alignment_quadrant]} fillOpacity={0.75} />)}
+                <Scatter data={scatter} isAnimationActive={false}>
+                  {scatter.map((p) => (
+                    <Cell key={`${p.geo_id}-${p.category_code}`} fill={diverging(p.misalignment_index)} stroke="#fff" strokeWidth={1} />
+                  ))}
                 </Scatter>
               </ScatterChart>
             </ResponsiveContainer>
-            <div className="mt-1 flex flex-wrap gap-3 text-xs">
-              {Object.entries(QUAD_COLOR).map(([k, c]) => (
-                <span key={k} className="flex items-center gap-1.5 text-slate-600">
-                  <i className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: c }} />{k.replace(/_/g, ' ').toLowerCase()}
-                </span>
-              ))}
+            <div className="mt-2 flex flex-wrap items-center gap-3 text-xs" style={{ color: COLOR.muted }}>
+              <span className="flex items-center gap-1.5">
+                <span className="h-2.5 w-16 rounded-full" style={{ background: `linear-gradient(90deg, ${diverging(-100)}, ${diverging(0)}, ${diverging(100)})` }} />
+              </span>
+              <span>← demand outruns spending</span>
+              <span>spending outruns demand →</span>
+              <span className="ml-auto">dot size = citizens reporting</span>
             </div>
-          </Card>
+          </Panel>
 
-          <Card title="Demand trend (unique citizens / month)">
-            <ResponsiveContainer width="100%" height={180}>
-              <LineChart data={trendSeries} margin={{ top: 8, right: 12, bottom: 4, left: 4 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-                <YAxis tick={{ fontSize: 11 }} />
-                <Tooltip />
-                <Line type="monotone" dataKey="citizens" stroke="#2563eb" strokeWidth={2} dot={false} />
+          <Panel icon={ShowChartIcon} title="Is it getting better or worse?"
+            explain="Unique citizens reporting each month. A rising line means a problem is spreading, which the priority score weights separately from its absolute size.">
+            <ResponsiveContainer width="100%" height={170}>
+              <LineChart data={trendSeries} margin={{ top: 8, right: 14, bottom: 4, left: 6 }}>
+                <CartesianGrid stroke={COLOR.grid} strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="month" tick={{ fontSize: 11, fill: COLOR.muted }} stroke={COLOR.axis} />
+                <YAxis tick={{ fontSize: 11, fill: COLOR.muted }} stroke={COLOR.axis} width={44} />
+                <Tooltip cursor={{ stroke: COLOR.axis, strokeDasharray: '3 3' }} content={({ payload, label }) => {
+                  const p = payload?.[0]
+                  return p ? <ChartTooltip title={label} rows={[['Citizens reporting', num(p.value)]]} /> : null
+                }} />
+                <Line type="monotone" dataKey="citizens" stroke={COLOR.seq[3]} strokeWidth={2} dot={false}
+                  activeDot={{ r: 4, fill: COLOR.seq[3], stroke: '#fff', strokeWidth: 2 }} isAnimationActive={false} />
               </LineChart>
             </ResponsiveContainer>
-          </Card>
+          </Panel>
         </div>
       </div>
 
-      <Card title={`Recommended priorities${district ? ` — ${district.district}` : ''}`}
-        actions={<span className="text-xs text-slate-500">deterministic score · AI writes only the explanation</span>}>
+      <Panel icon={RecommendIcon} title={`Recommended priorities${district ? ` — ${district.district}` : ''}`}
+        explain="Ranked by a fixed formula: 30% citizen demand, 25% infrastructure gap, 20% population impact, 15% urgency, 10% alignment with national programmes. Open any row to see every input. Each recommendation checks the project pipeline first, so it can tell you to accelerate what exists rather than fund a duplicate."
+        actions={<Chip title="The order is reproducible: same data in, same order out.">deterministic ranking</Chip>}>
         <div className="space-y-2">
-          {(recs || []).map((r) => (
-            <div key={r.id} className="rounded-lg border border-slate-200">
-              <button onClick={() => setOpenRec(openRec === r.id ? null : r.id)} className="flex w-full items-center gap-3 px-3 py-2.5 text-left hover:bg-slate-50">
-                <span className="w-12 shrink-0 text-lg font-bold tabular-nums text-slate-900">{r.priority_score}</span>
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-medium text-slate-900">{r.title}</span>
-                  <span className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-slate-500">
-                    <Badge tone="blue">{REC_TYPE_LABEL[r.rec_type]}</Badge>
-                    <Quadrant value={r.alignment_quadrant} />
-                    <span>{num(r.evidence.unique_citizens)} citizens · infra {r.evidence.infrastructure_index ?? '—'}/100 · {inr(r.evidence.allocated_inr_cr)}</span>
+          {(recs || []).map((r) => {
+            const open = openRec === r.id
+            const type = REC_TYPE[r.rec_type]
+            return (
+              <div key={r.id} className="overflow-hidden rounded-lg border" style={{ borderColor: COLOR.grid }}>
+                <button onClick={() => setOpenRec(open ? null : r.id)} className="flex w-full items-start gap-3 px-3 py-2.5 text-left transition hover:bg-slate-50">
+                  <span className="tnum w-11 shrink-0 text-center">
+                    <span className="block text-lg font-bold leading-tight" style={{ color: COLOR.ink }}>{r.priority_score}</span>
+                    <span className="block text-[10px] uppercase" style={{ color: COLOR.muted }}>score</span>
                   </span>
-                </span>
-                <span className="shrink-0 text-slate-400">{openRec === r.id ? '▴' : '▾'}</span>
-              </button>
-              {openRec === r.id && <RecDetail rec={r} />}
-            </div>
-          ))}
-          {!recs?.length && <p className="py-6 text-center text-sm text-slate-400">No recommendations for this filter.</p>}
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-medium" style={{ color: COLOR.ink }}>{r.title}</span>
+                    <span className="mt-1 flex flex-wrap items-center gap-1.5 text-xs" style={{ color: COLOR.muted }}>
+                      <Chip title={type?.meaning}>{type?.label || r.rec_type}</Chip>
+                      <QuadrantChip value={r.alignment_quadrant} />
+                      <span className="tnum">{num(r.evidence.unique_citizens)} citizens · infra {r.evidence.infrastructure_index ?? '—'}/100 · {inr(r.evidence.allocated_inr_cr)}</span>
+                    </span>
+                  </span>
+                  <span className="shrink-0" style={{ color: COLOR.muted }}>
+                    {open ? <ExpandLessIcon sx={{ fontSize: 20 }} /> : <ExpandMoreIcon sx={{ fontSize: 20 }} />}
+                  </span>
+                </button>
+                {open && <RecDetail rec={r} />}
+              </div>
+            )
+          })}
+          {!recs?.length && <Empty icon={RecommendIcon}>No recommendations for this filter.</Empty>}
         </div>
-      </Card>
+      </Panel>
 
-      <Card title="Data sources behind these numbers">
-        <table className="w-full text-left text-xs">
-          <thead className="text-slate-500"><tr><th className="py-1">Dataset</th><th>Source</th><th>Data date</th><th>Rows</th><th /></tr></thead>
-          <tbody className="divide-y divide-slate-100">
-            {(summary.datasets || []).map((d) => (
-              <tr key={d.name}><td className="py-1.5 pr-3 font-medium text-slate-800">{d.name}</td>
-                <td className="pr-3 text-slate-600">{d.source}</td>
-                <td className="pr-3 tabular-nums text-slate-600">{d.data_date || '—'}</td>
-                <td className="pr-3 tabular-nums text-slate-600">{d.row_count ?? '—'}</td>
-                <td>{d.is_synthetic ? <Badge tone="amber">demo data</Badge> : <Badge tone="green">official</Badge>}</td></tr>
-            ))}
-          </tbody>
-        </table>
-      </Card>
+      <Panel icon={SourceIcon} title="Where these numbers come from"
+        explain="Every figure above traces to one of these datasets. Demo data is labelled as such — it is never presented as official.">
+        <div className="-m-4 overflow-x-auto">
+          <table className="w-full text-left text-xs">
+            <thead style={{ color: COLOR.muted, boxShadow: `inset 0 -1px 0 ${COLOR.grid}` }}>
+              <tr>
+                <th className="px-4 py-2 font-medium">Dataset</th>
+                <th className="py-2 pr-3 font-medium">Source</th>
+                <th className="py-2 pr-3 font-medium">Data date</th>
+                <th className="py-2 pr-3 text-right font-medium">Rows</th>
+                <th className="py-2 pr-4 font-medium">Provenance</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(summary.datasets || []).map((d) => (
+                <tr key={d.name} className="border-t" style={{ borderColor: COLOR.grid }}>
+                  <td className="px-4 py-2 font-medium" style={{ color: COLOR.ink }}>{d.name}</td>
+                  <td className="py-2 pr-3" style={{ color: COLOR.ink2 }}>{d.source}</td>
+                  <td className="tnum py-2 pr-3" style={{ color: COLOR.ink2 }}>{d.data_date || '—'}</td>
+                  <td className="tnum py-2 pr-3 text-right" style={{ color: COLOR.ink2 }}>{d.row_count ?? '—'}</td>
+                  <td className="py-2 pr-4">
+                    {d.is_synthetic
+                      ? <StatusChip tone="warning" title="Generated for the demo, modelled on the real thing.">demo data</StatusChip>
+                      : <StatusChip tone="good" title="Published government data.">official</StatusChip>}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Panel>
     </div>
   )
 }
 
 function RecDetail({ rec }) {
-  const e = rec.evidence
   const [state, setState] = useState({ rec, busy: false, error: null, impact: null })
   const r = state.rec
+  const e = r.evidence
+  const w = r.weights
 
   async function decide(decision) {
     setState((s) => ({ ...s, busy: true, error: null }))
@@ -158,57 +238,87 @@ function RecDetail({ rec }) {
     } catch (err) { setState((s) => ({ ...s, busy: false, error: err })) }
   }
 
+  const btn = 'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition disabled:opacity-40'
+
   return (
-    <div className="border-t border-slate-100 bg-slate-50/60 p-4">
+    <div className="border-t p-4" style={{ borderColor: COLOR.grid, background: COLOR.page }}>
       <div className="grid gap-5 lg:grid-cols-2">
         <div className="space-y-3">
           <div>
-            <div className="text-xs font-semibold uppercase text-slate-500">Why this score</div>
+            <h3 className="text-xs font-semibold uppercase tracking-wide" style={{ color: COLOR.muted }}>How the score is built</h3>
             <div className="mt-2 space-y-1.5">
-              <ScoreBar label={`Citizen demand (${Math.round(r.weights.demand * 100)}%)`} value={r.demand_score} />
-              <ScoreBar label={`Infrastructure gap (${Math.round(r.weights.infrastructure_gap * 100)}%)`} value={r.infrastructure_gap_score} />
-              <ScoreBar label={`Population impact (${Math.round(r.weights.population_impact * 100)}%)`} value={r.population_impact_score} />
-              <ScoreBar label={`Urgency (${Math.round(r.weights.urgency * 100)}%)`} value={r.urgency_score} />
-              <ScoreBar label={`Policy alignment (${Math.round(r.weights.policy_alignment * 100)}%)`} value={r.policy_alignment_score} />
+              <ScoreBar label="Citizen demand" weight={w.demand} value={r.demand_score} />
+              <ScoreBar label="Infrastructure gap" weight={w.infrastructure_gap} value={r.infrastructure_gap_score} />
+              <ScoreBar label="Population impact" weight={w.population_impact} value={r.population_impact_score} />
+              <ScoreBar label="Urgency" weight={w.urgency} value={r.urgency_score} />
+              <ScoreBar label="Policy alignment" weight={w.policy_alignment} value={r.policy_alignment_score} />
             </div>
+            <p className="mt-2 text-xs" style={{ color: COLOR.muted }}>
+              Each part is scaled 0–100, multiplied by its weight, and summed to {r.priority_score}.
+            </p>
           </div>
+
           {r.explanation && (
-            <div className="rounded-lg bg-white p-3 text-sm text-slate-700 ring-1 ring-slate-200">
-              {r.explanation}
-              <div className="mt-1.5 text-xs text-slate-400">Written by {r.explanation_model} from the evidence below — no new facts.</div>
+            <div className="rounded-lg bg-white p-3 ring-1" style={{ '--tw-ring-color': COLOR.grid }}>
+              <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide" style={{ color: COLOR.muted }}>
+                <AutoAwesomeIcon sx={{ fontSize: 14 }} />Plain-language briefing
+              </div>
+              <p className="mt-1.5 text-sm" style={{ color: COLOR.ink2 }}>{r.explanation}</p>
+              <p className="mt-1.5 text-xs" style={{ color: COLOR.muted }}>
+                Written by {r.explanation_model} from the evidence on the right and nothing else. It cannot change the score.
+              </p>
             </div>
           )}
         </div>
 
         <div className="space-y-3">
-          <div className="text-xs font-semibold uppercase text-slate-500">Evidence</div>
-          <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-            <Row k="Citizens reporting" v={`${num(e.unique_citizens)} (${num(e.requests)} messages)`} />
-            <Row k="Per 1,000 population" v={`${e.per_1000} → ${e.adjusted_per_1000} adjusted`} />
-            <Row k="Channels used" v={e.channels_used} />
-            <Row k="Average urgency" v={`${e.avg_urgency}/10`} />
-            <Row k="30-day growth" v={`${e.growth_30d_pct}%`} />
-            <Row k="People directly represented" v={num(e.people_directly_represented)} />
-            <Row k="District population" v={num(e.population)} />
-            <Row k="Infrastructure index" v={`${e.infrastructure_index ?? '—'}/100`} />
-            <Row k="Allocated FY budget" v={inr(e.allocated_inr_cr)} />
-            <Row k="Existing project" v={e.existing_project ? `${e.existing_project.name} (${e.existing_project.status.replace('_', ' ').toLowerCase()}, ${inr(e.existing_project.budget_inr_cr)})` : 'none active'} wide />
+          <h3 className="text-xs font-semibold uppercase tracking-wide" style={{ color: COLOR.muted }}>The evidence</h3>
+          <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+            <Fact k="Citizens reporting" v={`${num(e.unique_citizens)} (${num(e.requests)} messages)`} />
+            <Fact k="Per 100,000 people" v={`${e.per_100k} → ${e.adjusted_per_100k} adjusted`} hint="Adjusted upward where mobile coverage is low, so poorly connected districts are not under-counted." />
+            <Fact k="Channels used" v={`${e.channels_used} of 6`} hint="A problem reported through several channels is stronger evidence than the same volume from one." />
+            <Fact k="Average urgency" v={`${e.avg_urgency} / 10`} />
+            <Fact k="30-day change" v={`${e.growth_30d_pct > 0 ? '+' : ''}${e.growth_30d_pct}%`} />
+            <Fact k="People represented" v={num(e.people_directly_represented)} hint="Households behind the citizens who reported. Not the size of the affected area." />
+            <Fact k="District population" v={num(e.population)} />
+            <Fact k="Infrastructure index" v={`${e.infrastructure_index ?? '—'} / 100`} hint="Higher is better. The gap is 100 minus this." />
+            <Fact k="Budgeted this year" v={inr(e.allocated_inr_cr)} wide />
+            <Fact k="Existing project" wide
+              v={e.existing_project
+                ? `${e.existing_project.name} — ${e.existing_project.status.replace(/_/g, ' ').toLowerCase()}, ${inr(e.existing_project.budget_inr_cr)}`
+                : 'None active — nothing in the pipeline covers this'} />
           </dl>
 
           <div className="flex flex-wrap items-center gap-2 pt-1">
             {r.decision
-              ? <Badge tone={r.decision === 'ACCEPT' ? 'green' : r.decision === 'REJECT' ? 'rose' : 'amber'}>decision: {r.decision.toLowerCase()}</Badge>
+              ? <StatusChip tone={r.decision === 'ACCEPT' ? 'good' : r.decision === 'REJECT' ? 'critical' : 'warning'}>
+                  decision recorded: {r.decision.toLowerCase()}
+                </StatusChip>
               : <>
-                <button disabled={state.busy} onClick={() => decide('ACCEPT')} className="rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-40">Accept & set baseline</button>
-                <button disabled={state.busy} onClick={() => decide('DEFER')} className="rounded-lg bg-white px-3 py-1.5 text-sm font-medium text-slate-700 ring-1 ring-slate-300">Defer</button>
-                <button disabled={state.busy} onClick={() => decide('REJECT')} className="rounded-lg bg-white px-3 py-1.5 text-sm font-medium text-rose-700 ring-1 ring-rose-300">Reject</button>
+                <button disabled={state.busy} onClick={() => decide('ACCEPT')} className={`${btn} text-white`} style={{ background: COLOR.good }}>
+                  <ThumbUpAltIcon sx={{ fontSize: 16 }} />Accept
+                </button>
+                <button disabled={state.busy} onClick={() => decide('DEFER')} className={`${btn} ring-1`} style={{ background: '#fff', color: COLOR.ink2, '--tw-ring-color': COLOR.grid }}>
+                  <ScheduleIcon sx={{ fontSize: 16 }} />Defer
+                </button>
+                <button disabled={state.busy} onClick={() => decide('REJECT')} className={`${btn} ring-1`} style={{ background: '#fff', color: COLOR.critical, '--tw-ring-color': `${COLOR.critical}55` }}>
+                  <CloseIcon sx={{ fontSize: 16 }} />Reject
+                </button>
               </>}
-            <span className="text-xs text-slate-400">confidence {r.confidence}</span>
           </div>
+          <p className="text-xs" style={{ color: COLOR.muted }}>
+            Accepting freezes today's numbers as a baseline, so the effect of the project can be measured against it later.
+          </p>
+
           {state.impact && (
-            <div className="rounded-lg bg-white p-3 text-xs ring-1 ring-slate-200">
-              <b className="text-slate-800">Impact baseline frozen.</b> {num(state.impact.baseline.unique_citizens)} citizens, {state.impact.baseline.per_1000}/1,000,
-              urgency {state.impact.baseline.avg_urgency}, infra {state.impact.baseline.infrastructure_index}. Future change is measured against this.
+            <div className="rounded-lg bg-white p-3 text-xs ring-1" style={{ '--tw-ring-color': COLOR.grid }}>
+              <div className="flex items-center gap-1.5 font-semibold" style={{ color: COLOR.ink }}>
+                <FlagIcon sx={{ fontSize: 15, color: COLOR.good }} />Baseline frozen
+              </div>
+              <p className="tnum mt-1" style={{ color: COLOR.ink2 }}>
+                {num(state.impact.baseline.unique_citizens)} citizens · {state.impact.baseline.per_100k} per 100k ·
+                urgency {state.impact.baseline.avg_urgency} · infra {state.impact.baseline.infrastructure_index}/100
+              </p>
             </div>
           )}
           <ErrorBox error={state.error} />
@@ -218,9 +328,11 @@ function RecDetail({ rec }) {
   )
 }
 
-const Row = ({ k, v, wide }) => (
-  <div className={wide ? 'col-span-2' : ''}>
-    <dt className="text-xs text-slate-500">{k}</dt>
-    <dd className="text-slate-900">{v}</dd>
-  </div>
-)
+function Fact({ k, v, hint, wide }) {
+  return (
+    <div className={wide ? 'col-span-2' : ''}>
+      <dt className="text-xs" style={{ color: COLOR.muted }} title={hint}>{k}{hint && ' ⓘ'}</dt>
+      <dd className="tnum" style={{ color: COLOR.ink }}>{v}</dd>
+    </div>
+  )
+}

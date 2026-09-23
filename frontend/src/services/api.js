@@ -1,32 +1,40 @@
 const BASE = import.meta.env.VITE_API_URL || '/api'
 
-// Demo role switching: the backend accepts X-Demo-Role outside production (Firebase tokens take precedence).
+/** The route is the role, so a deep link or a refresh on /policymaker works the same as clicking the tab.
+ *  Outside production the backend trusts X-Demo-Role; in production a Firebase ID token carries the role
+ *  in its claims and this header is ignored. */
 export function getRole() {
-  try { return localStorage.getItem('role') || 'citizen' } catch { return 'citizen' }
-}
-export function setRole(role) {
-  try { localStorage.setItem('role', role) } catch { /* private mode */ }
+  const seg = window.location.pathname.split('/')[1]
+  return ['citizen', 'analyst', 'policymaker'].includes(seg) ? seg : 'citizen'
 }
 
 async function request(path, { method = 'GET', body, form } = {}) {
   const headers = { 'X-Demo-Role': getRole() }
   if (!form) headers['Content-Type'] = 'application/json'
-  const res = await fetch(`${BASE}${path}`, {
-    method,
-    headers,
-    body: form || (body ? JSON.stringify(body) : undefined),
-  })
-  if (!res.ok) throw new Error((await res.text().catch(() => '')) || `${res.status} ${res.statusText}`)
+
+  const res = await fetch(`${BASE}${path}`, { method, headers, body: form || (body ? JSON.stringify(body) : undefined) })
+  if (!res.ok) throw new Error(await readError(res))
   return res.status === 204 ? null : res.json()
 }
 
+/** FastAPI returns {"detail": ...}; surface that rather than a raw JSON blob. */
+async function readError(res) {
+  const text = await res.text().catch(() => '')
+  try {
+    const { detail } = JSON.parse(text)
+    if (typeof detail === 'string') return detail
+    if (Array.isArray(detail)) return detail.map((d) => d.msg || JSON.stringify(d)).join('; ')
+  } catch { /* not JSON */ }
+  return text || `${res.status} ${res.statusText}`
+}
+
 const qs = (params) =>
-  Object.entries(params || {}).filter(([, v]) => v !== undefined && v !== null && v !== '')
-    .map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join('&')
+  Object.entries(params || {})
+    .filter(([, v]) => v !== undefined && v !== null && v !== '')
+    .map(([k, v]) => `${k}=${encodeURIComponent(v)}`)
+    .join('&')
 
 export const api = {
-  health: () => request('/health'),
-
   // citizen
   submit: (body) => request('/requests', { method: 'POST', body }),
   submitVoice: (form) => request('/requests/voice', { method: 'POST', form }),
@@ -34,24 +42,18 @@ export const api = {
 
   // analyst
   listRequests: (p) => request(`/requests?${qs(p)}`),
-  getRequest: (id) => request(`/requests/${id}`),
   verify: (id, body) => request(`/requests/${id}/verify`, { method: 'POST', body }),
   reprocess: (id) => request(`/requests/${id}/reprocess`, { method: 'POST' }),
 
   // dashboard
   summary: (p) => request(`/dashboard/summary?${qs(p)}`),
-  hotspots: (p) => request(`/dashboard/hotspots?${qs(p)}`),
-  categories: (p) => request(`/dashboard/categories?${qs(p)}`),
   trends: (p) => request(`/dashboard/trends?${qs(p)}`),
-  clusters: (p) => request(`/dashboard/clusters?${qs(p)}`),
   alignment: (p) => request(`/dashboard/alignment?${qs(p)}`),
   geo: (p) => request(`/dashboard/geo?${qs(p)}`),
 
   // recommendations
   recommendations: (p) => request(`/recommendations?${qs(p)}`),
   recommendation: (id) => request(`/recommendations/${id}`),
-  recompute: (p) => request(`/recommendations/recompute?${qs(p)}`, { method: 'POST' }),
-  explain: (id) => request(`/recommendations/${id}/explain`, { method: 'POST' }),
   decide: (id, body) => request(`/recommendations/${id}/decision`, { method: 'POST', body }),
   impact: (id) => request(`/recommendations/${id}/impact`),
 
@@ -59,5 +61,4 @@ export const api = {
   configCategories: (lang) => request(`/config/categories?lang=${lang || 'en'}`),
   states: () => request('/config/states'),
   languages: () => request('/config/languages'),
-  datasets: () => request('/datasets'),
 }
