@@ -7,15 +7,25 @@ Core loop: citizen voice/text/message → Gemini understanding → structured re
 ## Stack
 FastAPI · PostgreSQL + PostGIS · Gemini (extraction, embeddings, explanation) · Cloud Speech-to-Text · Cloud Translation · BigQuery (national datasets) · Firebase Auth · Cloud Run
 
-## Run locally
+## Run
+
+Dependencies are installed into Homebrew Python 3.12 directly — there is no virtualenv to activate.
+
 ```bash
-python3.12 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env            # fill GEMINI_API_KEY etc.
+python3.12 -m pip install -r requirements.txt   # first time only
+cp .env.example .env                            # fill in GEMINI_API_KEY
 createdb brics && psql brics -c "CREATE EXTENSION IF NOT EXISTS postgis;"
-python app.py                    # http://localhost:8000/docs
-pytest
+python3.12 -m scripts.seed_all                  # build the demo database
+python3.12 app.py                               # http://localhost:8000/docs
 ```
+
+Tests:
+
+```bash
+python3.12 -m pytest -q
+```
+
+Python 3.12 is required: the code uses `X | None` type syntax, so macOS's bundled `python3` (3.9) will not run it.
 
 ## Deploy (Cloud Run)
 ```bash

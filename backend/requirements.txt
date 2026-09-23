@@ -1,22 +1,31 @@
+# web framework
 fastapi==0.115.6
 uvicorn[standard]==0.34.0
-pydantic==2.10.4
+pydantic==2.13.5
 pydantic-settings==2.7.1
-sqlalchemy==2.0.36
-psycopg[binary]==3.2.3
-geoalchemy2==0.16.0
-alembic==1.14.0
 python-multipart==0.0.20
 httpx==0.28.1
+
+# database
+SQLAlchemy==2.0.36
+psycopg[binary]==3.2.3
+GeoAlchemy2==0.16.0
+alembic==1.14.0
+
+# Google AI  (mandatory for this hackathon: Gemini, Speech-to-Text, Translation, BigQuery)
 google-genai==2.24.0
 google-cloud-speech==2.29.0
 google-cloud-translate==3.18.0
 google-cloud-texttospeech==2.23.0
 google-cloud-bigquery==3.27.0
 firebase-admin==6.6.0
+
+# data & geometry
 pandas==2.2.3
 numpy==2.2.1
 scikit-learn==1.6.0
+shapely==2.0.6
+
+# tests
 pytest==8.3.4
 pytest-asyncio==0.25.0
-shapely==2.0.6
