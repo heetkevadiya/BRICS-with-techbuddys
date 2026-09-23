@@ -74,7 +74,7 @@ def score_frame(db: Session, df: pd.DataFrame) -> pd.DataFrame:
     w = weights()
     active = df["unique_citizens"] > 0
     df["demand_score"] = 0.0
-    df.loc[active, "demand_score"] = _minmax(df.loc[active, "adjusted_per_1000"]).round(1)
+    df.loc[active, "demand_score"] = _minmax(df.loc[active, "adjusted_per_100k"]).round(1)
     df["infrastructure_gap_score"] = df["infra_gap"].round(1)
     df["population_impact_score"] = 0.0
     df.loc[active, "population_impact_score"] = _minmax(df.loc[active, "affected_population"].pow(0.5)).round(1)

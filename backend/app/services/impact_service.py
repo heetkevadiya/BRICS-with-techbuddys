@@ -18,7 +18,7 @@ def snapshot_for(db: Session, geo_id: int, category_code: str) -> dict:
     r = row.iloc[0]
     return {
         "unique_citizens": int(r["unique_citizens"]), "requests": int(r["request_count"]),
-        "per_1000": round(float(r["per_1000"]), 2), "avg_urgency": round(float(r["avg_urgency"]), 1),
+        "per_100k": round(float(r["per_100k"]), 1), "avg_urgency": round(float(r["avg_urgency"]), 1),
         "infrastructure_index": round(float(r["infra_index"]), 1), "clusters": int(r["cluster_count"]),
         "last_30d": int(r["last_30d"]), "priority_score": float(r["priority_score"]),
     }

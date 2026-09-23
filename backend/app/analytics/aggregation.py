@@ -26,7 +26,7 @@ from app.models import (
 )
 
 HOUSEHOLD_SIZE = 4.6          # Census 2011 average household size, India
-SMALL_POP_GUARD = 50_000      # below this, per-1,000 rates are smoothed toward the state mean
+SMALL_POP_GUARD = 50_000      # below this, per-100k rates are smoothed toward the state mean
 VALID_STATUSES = (ProcessingStatus.PROCESSED, ProcessingStatus.REVIEW_REQUIRED)
 
 
@@ -115,16 +115,16 @@ def integrated_frame(db: Session, state_id: int, now: datetime | None = None) ->
     df["max_urgency"] = df["max_urgency"].astype(float).fillna(0.0)
 
     # --- per-capita demand (blueprint: never rank by raw counts) ---
-    df["per_1000"] = df["unique_citizens"] / df["population"] * 1000
-    state_mean = df.loc[df["unique_citizens"] > 0, "per_1000"].mean() if (df["unique_citizens"] > 0).any() else 0.0
+    df["per_100k"] = df["unique_citizens"] / df["population"] * 100_000
+    state_mean = df.loc[df["unique_citizens"] > 0, "per_100k"].mean() if (df["unique_citizens"] > 0).any() else 0.0
     small = df["population"] < SMALL_POP_GUARD
     w = (df["population"] / SMALL_POP_GUARD).clip(upper=1.0)
-    df.loc[small, "per_1000"] = w[small] * df.loc[small, "per_1000"] + (1 - w[small]) * state_mean
+    df.loc[small, "per_100k"] = w[small] * df.loc[small, "per_100k"] + (1 - w[small]) * state_mean
 
     # --- connectivity adjustment: low-penetration districts under-report, scale toward the state average ---
     pen = df["mobile_penetration_pct"].fillna(df["mobile_penetration_pct"].mean())
     df["connectivity_factor"] = (pen.mean() / pen).clip(lower=0.8, upper=1.6)
-    df["adjusted_per_1000"] = df["per_1000"] * df["connectivity_factor"]
+    df["adjusted_per_100k"] = df["per_100k"] * df["connectivity_factor"]
 
     # --- growth, gap, investment per capita, affected population ---
     df["growth_pct"] = df.apply(

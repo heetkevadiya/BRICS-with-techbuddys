@@ -22,8 +22,8 @@ router = APIRouter(prefix="/dashboard", tags=["dashboard"], dependencies=[Depend
 def _hotspot_rows(df) -> list[HotspotOut]:
     return [HotspotOut(
         geo_id=int(r.geo_id), district=r.district, category_code=r.category_code, category=r.category,
-        requests=int(r.request_count), unique_citizens=int(r.unique_citizens), per_1000=round(float(r.per_1000), 2),
-        adjusted_per_1000=round(float(r.adjusted_per_1000), 2), avg_urgency=round(float(r.avg_urgency), 1),
+        requests=int(r.request_count), unique_citizens=int(r.unique_citizens), per_100k=round(float(r.per_100k), 2),
+        adjusted_per_100k=round(float(r.adjusted_per_100k), 2), avg_urgency=round(float(r.avg_urgency), 1),
         growth_pct=round(float(r.growth_pct), 1), population=int(r.population), people_directly_represented=int(r.affected_population),
         infra_index=float(r.infra_index) if r.infra_index == r.infra_index else None, infra_gap=float(r.infra_gap),
         allocated_inr_cr=round(float(r.allocated_inr) / 1e7, 2), alignment_quadrant=r.alignment_quadrant,
@@ -46,12 +46,12 @@ def summary(db: Session = Depends(get_db), state: GeographicEntity = Depends(get
     chans = {k.value: v for k, v in valid.with_entities(CitizenRequest.channel, func.count()).group_by(CitizenRequest.channel).all()}
     cats = valid.with_entities(CitizenRequest.category_code, Category.name, func.count()).join(Category, Category.code == CitizenRequest.category_code).group_by(CitizenRequest.category_code, Category.name).order_by(func.count().desc()).limit(8).all()
     review = db.query(CitizenRequest).filter(CitizenRequest.processing_status == ProcessingStatus.REVIEW_REQUIRED).count()
-    ds = [{"name": d.dataset_name, "source": d.source, "data_date": d.data_date, "retrieved_at": d.retrieved_at, "is_synthetic": d.is_synthetic, "status": d.status.value}
+    ds = [{"name": d.dataset_name, "source": d.source, "data_date": d.data_date, "retrieved_at": d.retrieved_at, "is_synthetic": d.is_synthetic, "row_count": d.row_count, "status": d.status.value}
           for d in db.query(DatasetMetadata).filter(DatasetMetadata.status == "ACTIVE")]
     return SummaryOut(
         state=state.name, total_requests=total, unique_citizens=uniq, districts_reporting=valid.with_entities(func.count(func.distinct(CitizenRequest.resolved_geo_id))).scalar() or 0,
         languages={k or "unknown": v for k, v in langs.items()}, channels=chans, review_required=review,
-        per_1000_population=round(uniq / pop * 1000, 2), growth_30d_pct=round(((last30 - prev30) / prev30 * 100) if prev30 else 0.0, 1),
+        per_100k_population=round(uniq / pop * 100_000, 1), growth_30d_pct=round(((last30 - prev30) / prev30 * 100) if prev30 else 0.0, 1),
         top_categories=[{"code": c, "name": n, "count": k} for c, n, k in cats], datasets=ds,
     )
 
@@ -95,7 +95,7 @@ def alignment(db: Session = Depends(get_db), state: GeographicEntity = Depends(g
         return []
     if category:
         df = df[df["category_code"] == category]
-    cols = ["geo_id", "district", "category_code", "category", "unique_citizens", "adjusted_per_1000", "infra_gap", "allocated_inr",
+    cols = ["geo_id", "district", "category_code", "category", "unique_citizens", "adjusted_per_100k", "infra_gap", "allocated_inr",
             "invest_per_capita_inr", "demand_rank", "invest_rank", "misalignment_index", "alignment_quadrant", "priority_score"]
     out = df[cols].copy()
     out["allocated_inr_cr"] = (out.pop("allocated_inr") / 1e7).round(2)
@@ -118,7 +118,7 @@ def geo(db: Session = Depends(get_db), state: GeographicEntity = Depends(get_sta
             top = d[d["geo_id"] == r.geo_id].sort_values("priority_score", ascending=False).iloc[0]
             per_district[int(r.geo_id)] = {
                 "requests": int(r.requests), "unique_citizens": int(r.unique_citizens), "population": int(r.population),
-                "per_1000": round(float(r.unique_citizens) / float(r.population) * 1000, 2), "avg_urgency": round(float(r.avg_urgency), 1),
+                "per_100k": round(float(r.unique_citizens) / float(r.population) * 100_000, 1), "avg_urgency": round(float(r.avg_urgency), 1),
                 "infra_index": round(float(r.infra_index), 1), "priority_score": float(r.priority_score), "hotspot_score": float(r.hotspot_score),
                 "allocated_inr_cr": round(float(r.allocated_inr) / 1e7, 1), "top_category": top["category"], "top_category_code": top["category_code"],
                 "alignment_quadrant": top["alignment_quadrant"],

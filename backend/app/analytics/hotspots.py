@@ -16,7 +16,7 @@ def add_hotspot_score(df: pd.DataFrame) -> pd.DataFrame:
     if active.any():
         a = df[active]
         score = (
-            0.35 * _minmax(a["adjusted_per_1000"])
+            0.35 * _minmax(a["adjusted_per_100k"])
             + 0.20 * (a["avg_urgency"] * 10)
             + 0.15 * _minmax(a["affected_population"].pow(0.5))
             + 0.20 * a["infra_gap"]

@@ -56,7 +56,7 @@ def _evidence(row) -> dict:
     return {
         "district": row["district"], "category": row["category"],
         "requests": int(row["request_count"]), "unique_citizens": int(row["unique_citizens"]),
-        "per_1000_population": round(float(row["per_1000"]), 2), "adjusted_per_1000": round(float(row["adjusted_per_1000"]), 2),
+        "per_100k_population": round(float(row["per_100k"]), 1), "adjusted_per_100k": round(float(row["adjusted_per_100k"]), 1),
         "connectivity_factor": round(float(row["connectivity_factor"]), 2), "channels_used": int(row["channels"]),
         "clusters": int(row["cluster_count"]), "avg_urgency": round(float(row["avg_urgency"]), 1), "max_urgency": int(row["max_urgency"]),
         "growth_30d_pct": round(float(row["growth_pct"]), 1), "population": int(row["population"]),
@@ -75,7 +75,7 @@ def _evidence(row) -> dict:
 
 def _template_explanation(row, rec_type: RecommendationType, ev: dict) -> str:
     parts = [
-        f"{ev['unique_citizens']} citizens ({ev['adjusted_per_1000']} per 1,000 after connectivity adjustment) reported "
+        f"{ev['unique_citizens']} citizens ({ev['adjusted_per_100k']} per 100,000 people after connectivity adjustment) reported "
         f"{ev['category'].lower()} problems in {ev['district']} with average urgency {ev['avg_urgency']}/10.",
     ]
     if ev["infrastructure_index"] is not None:

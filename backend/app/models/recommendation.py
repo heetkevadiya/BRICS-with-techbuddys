@@ -77,5 +77,5 @@ class ImpactBaseline(TimestampMixin, Base):
     recommendation_id: Mapped[int] = mapped_column(ForeignKey("recommendations.id"), unique=True)
     geo_id: Mapped[int] = mapped_column(ForeignKey("geographic_entities.id"))
     category_code: Mapped[str] = mapped_column(ForeignKey("categories.code"))
-    snapshot: Mapped[dict] = mapped_column(JSON)  # unique_citizens, per_1000, avg_urgency, infra_index, cluster_count
+    snapshot: Mapped[dict] = mapped_column(JSON)  # unique_citizens, per_100k, avg_urgency, infra_index, cluster_count
     snapshot_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)

@@ -15,7 +15,7 @@ class SummaryOut(BaseModel):
     languages: dict[str, int]
     channels: dict[str, int]
     review_required: int
-    per_1000_population: float
+    per_100k_population: float
     growth_30d_pct: float
     top_categories: list[dict]
     datasets: list[dict]
@@ -28,8 +28,8 @@ class HotspotOut(BaseModel):
     category: str
     requests: int
     unique_citizens: int
-    per_1000: float
-    adjusted_per_1000: float
+    per_100k: float
+    adjusted_per_100k: float
     avg_urgency: float
     growth_pct: float
     population: int

@@ -21,7 +21,7 @@ def add_alignment(df: pd.DataFrame) -> pd.DataFrame:
     within the state, and label the quadrant. Ranks are computed within each category so sectors with naturally
     bigger budgets (roads) are not compared with small ones (street lighting)."""
     df = df.copy()
-    df["demand_pressure"] = df["adjusted_per_1000"].rank(pct=True) * 0.6 + (df["infra_gap"] / 100) * 0.4
+    df["demand_pressure"] = df["adjusted_per_100k"].rank(pct=True) * 0.6 + (df["infra_gap"] / 100) * 0.4
     df["demand_rank"] = df.groupby("category_code")["demand_pressure"].rank(pct=True)
     df["invest_rank"] = df.groupby("category_code")["invest_per_capita_inr"].rank(pct=True)
     df["misalignment_index"] = ((df["demand_rank"] - df["invest_rank"]) * 100).round(1)
