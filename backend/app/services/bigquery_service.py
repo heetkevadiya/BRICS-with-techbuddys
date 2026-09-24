@@ -14,7 +14,6 @@ and `enabled()` returns False, so the dashboards never break during a demo.
 from __future__ import annotations
 
 import logging
-import os
 from functools import lru_cache
 
 import pandas as pd
@@ -30,7 +29,7 @@ TABLES = {
 
 
 def enabled() -> bool:
-    return bool(settings.google_cloud_project and os.environ.get("GOOGLE_APPLICATION_CREDENTIALS"))
+    return bool(settings.google_cloud_project and settings.credentials_path)
 
 
 @lru_cache(maxsize=1)
@@ -46,12 +45,20 @@ def dataset_ref() -> str:
 
 def ensure_dataset() -> str:
     """Create the dataset in the India region if it is not there yet."""
+    from google.api_core.exceptions import Forbidden
     from google.cloud import bigquery
 
     ds = bigquery.Dataset(dataset_ref())
     ds.location = settings.bigquery_location
     ds.description = "Citizen demand and national development indicators, by district."
-    _client().create_dataset(ds, exists_ok=True)
+    try:
+        _client().create_dataset(ds, exists_ok=True)
+    except Forbidden as e:
+        raise PermissionError(
+            f"The service account cannot create the dataset {dataset_ref()}. Grant it the "
+            f"'BigQuery User' role (Data Editor alone cannot create datasets), or create the dataset "
+            f"manually in location {settings.bigquery_location}. Original error: {e}"
+        ) from e
     return dataset_ref()
 
 

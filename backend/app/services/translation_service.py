@@ -3,8 +3,7 @@ Cloud Translation when configured, else Gemini. Detection + English translation 
 inside the extraction call to save a round-trip."""
 from __future__ import annotations
 
-import os
-
+from app.core.config import settings
 from app.services.ai import gemini_client
 
 LANG_NAMES = {"gu": "Gujarati", "hi": "Hindi", "en": "English", "mr": "Marathi", "ta": "Tamil", "te": "Telugu",
@@ -15,7 +14,7 @@ LANG_NAMES = {"gu": "Gujarati", "hi": "Hindi", "en": "English", "mr": "Marathi",
 def translate(text: str, target_lang: str) -> str:
     if target_lang in ("en", None) or not text:
         return text
-    if os.environ.get("GOOGLE_APPLICATION_CREDENTIALS"):
+    if settings.credentials_path:
         from google.cloud import translate_v2 as translate
 
         return translate.Client().translate(text, target_language=target_lang[:2])["translatedText"]

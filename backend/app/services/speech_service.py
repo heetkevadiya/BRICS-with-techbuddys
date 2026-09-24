@@ -3,6 +3,8 @@ native audio understanding — both are Google AI, and the pipeline does not car
 from __future__ import annotations
 
 import logging
+
+from app.core.config import settings
 import os
 
 log = logging.getLogger(__name__)
@@ -12,7 +14,7 @@ _LANG_HINTS = {"gu": "gu-IN", "hi": "hi-IN", "en": "en-IN", "mr": "mr-IN", "ta":
 
 
 def cloud_stt_available() -> bool:
-    return bool(os.environ.get("GOOGLE_APPLICATION_CREDENTIALS"))
+    return settings.credentials_path is not None
 
 
 def transcribe_with_cloud_stt(audio: bytes, mime: str, language: str | None) -> tuple[str, str]:

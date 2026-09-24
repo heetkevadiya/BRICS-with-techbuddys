@@ -1,4 +1,9 @@
+import os
+from pathlib import Path
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+BASE_DIR = Path(__file__).resolve().parents[2]
 
 
 class Settings(BaseSettings):
@@ -11,6 +16,7 @@ class Settings(BaseSettings):
     gemini_api_key: str = ""
     gemini_model: str = "gemini-2.5-flash"
     gemini_embedding_model: str = "gemini-embedding-001"
+    google_application_credentials: str = ""
     google_cloud_project: str = ""
     bigquery_dataset: str = "citizen_demand"
     bigquery_location: str = "asia-south1"
@@ -23,5 +29,22 @@ class Settings(BaseSettings):
     def cors_origin_list(self) -> list[str]:
         return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
 
+    @property
+    def credentials_path(self) -> Path | None:
+        """The service-account file, resolved against the backend directory when given relatively."""
+        if not self.google_application_credentials:
+            return None
+        p = Path(self.google_application_credentials)
+        p = p if p.is_absolute() else BASE_DIR / p
+        return p if p.exists() else None
+
 
 settings = Settings()
+
+# Google's client libraries read this from the process environment, not from our settings object,
+# so publish it once at import time. Without this, BigQuery/Speech/Translation stay silently disabled
+# even though the .env names a valid key file.
+if settings.credentials_path:
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = str(settings.credentials_path)
+if settings.google_cloud_project:
+    os.environ.setdefault("GOOGLE_CLOUD_PROJECT", settings.google_cloud_project)
