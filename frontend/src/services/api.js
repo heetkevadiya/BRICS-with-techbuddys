@@ -57,6 +57,10 @@ export const api = {
   decide: (id, body) => request(`/recommendations/${id}/decision`, { method: 'POST', body }),
   impact: (id) => request(`/recommendations/${id}/impact`),
 
+  // data provenance & national warehouse
+  datasets: () => request('/datasets'),
+  warehouse: () => request('/datasets/warehouse'),
+
   // config
   configCategories: (lang) => request(`/config/categories?lang=${lang || 'en'}`),
   states: () => request('/config/states'),

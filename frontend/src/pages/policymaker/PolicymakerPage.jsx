@@ -9,6 +9,7 @@ import AccountBalanceIcon from '@mui/icons-material/AccountBalance'
 import ShowChartIcon from '@mui/icons-material/ShowChart'
 import RecommendIcon from '@mui/icons-material/Recommend'
 import SourceIcon from '@mui/icons-material/Source'
+import StorageIcon from '@mui/icons-material/Storage'
 import GroupsIcon from '@mui/icons-material/Groups'
 import PersonPinCircleIcon from '@mui/icons-material/PersonPinCircle'
 import TrendingUpIcon from '@mui/icons-material/TrendingUp'
@@ -40,6 +41,7 @@ export default function PolicymakerPage() {
   const { data: recs } = useApi(() => api.recommendations({ category: category || undefined, district: district?.district, limit: 30 }), [category, district?.district])
   const { data: align } = useApi(() => api.alignment({ category: category || undefined }), [category])
   const { data: trends } = useApi(() => api.trends({ category: category || undefined, months: 6 }), [category])
+  const { data: warehouse } = useApi(() => api.warehouse(), [])
 
   const trendSeries = useMemo(() => {
     const byMonth = {}
@@ -79,9 +81,22 @@ export default function PolicymakerPage() {
         </select>
       </header>
 
+      <div className="flex flex-wrap items-center gap-2 rounded-xl border bg-white px-4 py-2.5 text-xs shadow-sm"
+        style={{ borderColor: COLOR.grid, color: COLOR.ink2 }}>
+        <StorageIcon sx={{ fontSize: 16, color: COLOR.muted }} />
+        <span><b style={{ color: COLOR.ink }}>{num(summary.national?.districts ?? 0)}</b> districts across{' '}
+          <b style={{ color: COLOR.ink }}>{summary.national?.states ?? 0}</b> states &amp; UTs loaded from Census 2011</span>
+        <span style={{ color: COLOR.grid }}>|</span>
+        <span>pilot live in <b style={{ color: COLOR.ink }}>{summary.state}</b></span>
+        <span style={{ color: COLOR.grid }}>|</span>
+        {warehouse?.enabled
+          ? <StatusChip tone="good" title={warehouse.purpose}>BigQuery national layer live</StatusChip>
+          : <StatusChip tone="neutral" title={warehouse?.purpose}>BigQuery layer not configured — running on Postgres</StatusChip>}
+      </div>
+
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <Stat icon={GroupsIcon} label="Citizens reporting" value={num(summary.unique_citizens)} sub={`${num(summary.total_requests)} messages, repeats counted once`} />
-        <Stat icon={PersonPinCircleIcon} label="Per 100,000 people" value={summary.per_100k_population} sub={`${summary.districts_reporting} of 34 districts reporting`} />
+        <Stat icon={PersonPinCircleIcon} label="Per 100,000 people" value={summary.per_100k_population} sub={`${summary.districts_reporting} of ${summary.state_districts ?? 0} districts reporting`} />
         <Stat icon={TrendingUpIcon} label="30-day change" value={`${summary.growth_30d_pct > 0 ? '+' : ''}${summary.growth_30d_pct}%`} delta={summary.growth_30d_pct} />
         <Stat icon={TranslateIcon} label="Languages served" value={Object.keys(summary.languages).length} sub={Object.keys(summary.languages).join(', ')} />
         <Stat icon={PendingActionsIcon} label="Awaiting human review" value={num(summary.review_required)} sub="low-confidence AI output" />
@@ -189,7 +204,7 @@ export default function PolicymakerPage() {
       </Panel>
 
       <Panel icon={SourceIcon} title="Where these numbers come from"
-        explain="Every figure above traces to one of these datasets. Demo data is labelled as such — it is never presented as official.">
+        explain="Every figure above traces to one of these datasets. Census figures are measured; anything estimated is labelled, because a policymaker has to be able to tell the two apart.">
         <div className="-m-4 overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead style={{ color: COLOR.muted, boxShadow: `inset 0 -1px 0 ${COLOR.grid}` }}>
@@ -197,6 +212,7 @@ export default function PolicymakerPage() {
                 <th className="px-4 py-2 font-medium">Dataset</th>
                 <th className="py-2 pr-3 font-medium">Source</th>
                 <th className="py-2 pr-3 font-medium">Data date</th>
+                <th className="py-2 pr-3 font-medium">Coverage</th>
                 <th className="py-2 pr-3 text-right font-medium">Rows</th>
                 <th className="py-2 pr-4 font-medium">Provenance</th>
               </tr>
@@ -207,11 +223,12 @@ export default function PolicymakerPage() {
                   <td className="px-4 py-2 font-medium" style={{ color: COLOR.ink }}>{d.name}</td>
                   <td className="py-2 pr-3" style={{ color: COLOR.ink2 }}>{d.source}</td>
                   <td className="tnum py-2 pr-3" style={{ color: COLOR.ink2 }}>{d.data_date || '—'}</td>
-                  <td className="tnum py-2 pr-3 text-right" style={{ color: COLOR.ink2 }}>{d.row_count ?? '—'}</td>
+                  <td className="py-2 pr-3" style={{ color: COLOR.ink2 }}>{d.coverage || '—'}</td>
+                  <td className="tnum py-2 pr-3 text-right" style={{ color: COLOR.ink2 }}>{num(d.row_count ?? 0) || '—'}</td>
                   <td className="py-2 pr-4">
                     {d.is_synthetic
-                      ? <StatusChip tone="warning" title="Generated for the demo, modelled on the real thing.">demo data</StatusChip>
-                      : <StatusChip tone="good" title="Published government data.">official</StatusChip>}
+                      ? <StatusChip tone="warning" title={d.notes}>estimated</StatusChip>
+                      : <StatusChip tone="good" title={d.notes}>official</StatusChip>}
                   </td>
                 </tr>
               ))}

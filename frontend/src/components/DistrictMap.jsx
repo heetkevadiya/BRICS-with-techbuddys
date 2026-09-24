@@ -3,10 +3,20 @@
  *  Hover layer is on by default, per the data-viz interaction rule. */
 import { useEffect, useMemo, useRef, useState } from 'react'
 import ChartTooltip from './Tooltip'
+import GoogleDistrictMap from './GoogleDistrictMap'
 import { COLOR, sequential } from '../theme'
 import { num } from '../format'
 
-export default function DistrictMap({ geojson, metric = 'priority_score', metricLabel = 'Priority', selected, onSelect }) {
+/** Google Maps when a key is configured and loads; inline SVG otherwise.
+ *  The SVG path needs no key, no network and no billing, so the demo always has a map. */
+export default function DistrictMap(props) {
+  const [mapsFailed, setMapsFailed] = useState(false)
+  const hasKey = Boolean(import.meta.env.VITE_GOOGLE_MAPS_API_KEY)
+  if (hasKey && !mapsFailed) return <GoogleDistrictMap {...props} onError={() => setMapsFailed(true)} />
+  return <SvgDistrictMap {...props} />
+}
+
+function SvgDistrictMap({ geojson, metric = 'priority_score', metricLabel = 'Priority', selected, onSelect }) {
   const [hover, setHover] = useState(null)
   const [cursor, setCursor] = useState({ x: 0, y: 0 })
   const wrap = useRef(null)
