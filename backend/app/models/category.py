@@ -17,5 +17,8 @@ class Category(Base):
     department: Mapped[str | None] = mapped_column(String(120))
     sdg: Mapped[list] = mapped_column(JSON, default=list)
     infra_index_field: Mapped[str | None] = mapped_column(String(40))  # column in infrastructure_indices
+    # Whether that index is measured or estimated. A policymaker must be able to tell the two apart,
+    # so this travels with every number derived from it.
+    index_source: Mapped[str] = mapped_column(String(24), default="modelled")  # census_2011 | modelled
     sort_order: Mapped[int] = mapped_column(Integer, default=0)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)

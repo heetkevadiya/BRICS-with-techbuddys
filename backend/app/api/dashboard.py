@@ -46,10 +46,18 @@ def summary(db: Session = Depends(get_db), state: GeographicEntity = Depends(get
     chans = {k.value: v for k, v in valid.with_entities(CitizenRequest.channel, func.count()).group_by(CitizenRequest.channel).all()}
     cats = valid.with_entities(CitizenRequest.category_code, Category.name, func.count()).join(Category, Category.code == CitizenRequest.category_code).group_by(CitizenRequest.category_code, Category.name).order_by(func.count().desc()).limit(8).all()
     review = db.query(CitizenRequest).filter(CitizenRequest.processing_status == ProcessingStatus.REVIEW_REQUIRED).count()
-    ds = [{"name": d.dataset_name, "source": d.source, "data_date": d.data_date, "retrieved_at": d.retrieved_at, "is_synthetic": d.is_synthetic, "row_count": d.row_count, "status": d.status.value}
-          for d in db.query(DatasetMetadata).filter(DatasetMetadata.status == "ACTIVE")]
+    ds = [{"name": d.dataset_name, "source": d.source, "source_url": d.source_url, "data_date": d.data_date,
+           "retrieved_at": d.retrieved_at, "is_synthetic": d.is_synthetic, "row_count": d.row_count,
+           "coverage": d.coverage, "notes": d.notes, "status": d.status.value}
+          for d in db.query(DatasetMetadata).filter(DatasetMetadata.status == "ACTIVE").order_by(DatasetMetadata.id)]
+    state_districts = db.query(GeographicEntity).filter_by(parent_id=state.id, level=GeoLevel.DISTRICT).count()
+    national = {
+        "states": db.query(GeographicEntity).filter_by(level=GeoLevel.STATE).count(),
+        "districts": db.query(GeographicEntity).filter_by(level=GeoLevel.DISTRICT).count(),
+        "population": int(db.query(func.sum(Demographics.population)).scalar() or 0),
+    }
     return SummaryOut(
-        state=state.name, total_requests=total, unique_citizens=uniq, districts_reporting=valid.with_entities(func.count(func.distinct(CitizenRequest.resolved_geo_id))).scalar() or 0,
+        state=state.name, state_districts=state_districts, national=national, total_requests=total, unique_citizens=uniq, districts_reporting=valid.with_entities(func.count(func.distinct(CitizenRequest.resolved_geo_id))).scalar() or 0,
         languages={k or "unknown": v for k, v in langs.items()}, channels=chans, review_required=review,
         per_100k_population=round(uniq / pop * 100_000, 1), growth_30d_pct=round(((last30 - prev30) / prev30 * 100) if prev30 else 0.0, 1),
         top_categories=[{"code": c, "name": n, "count": k} for c, n, k in cats], datasets=ds,

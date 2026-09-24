@@ -12,6 +12,8 @@ class Settings(BaseSettings):
     gemini_model: str = "gemini-2.5-flash"
     gemini_embedding_model: str = "gemini-embedding-001"
     google_cloud_project: str = ""
+    bigquery_dataset: str = "citizen_demand"
+    bigquery_location: str = "asia-south1"
     firebase_project_id: str = ""
 
     default_country: str = "IN"

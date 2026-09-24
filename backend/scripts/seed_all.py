@@ -20,6 +20,7 @@ ap.add_argument("--explain", type=int, default=10, help="how many top recommenda
 args = ap.parse_args()
 
 subprocess.run([sys.executable, "-m", "alembic", "upgrade", "head"], check=True)
+subprocess.run([sys.executable, "-m", "scripts.fetch_open_data"], check=True)
 subprocess.run([sys.executable, "-m", "scripts.generate_seed_datasets"], check=True)
 subprocess.run([sys.executable, "-m", "scripts.seed_government_data"], check=True)
 with SessionLocal() as db:

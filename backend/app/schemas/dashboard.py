@@ -18,6 +18,8 @@ class SummaryOut(BaseModel):
     per_100k_population: float
     growth_30d_pct: float
     top_categories: list[dict]
+    state_districts: int
+    national: dict
     datasets: list[dict]
 
 

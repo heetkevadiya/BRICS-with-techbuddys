@@ -14,44 +14,11 @@ from pathlib import Path
 SEED_DIR = Path(__file__).resolve().parents[1] / "data" / "seed"
 rng = random.Random(42)
 
-districts = list(csv.DictReader(open(SEED_DIR / "gujarat_districts.csv")))
+# The pilot states: projects and budgets are curated for these, while census demographics
+# and indices cover all of India. Adding a state here is the only change needed to extend the pilot.
+PILOT_STATES = ["Gujarat"]
+districts = [r for r in csv.DictReader(open(SEED_DIR / "gujarat_districts.csv"))]
 categories = [c for c in json.loads((SEED_DIR / "categories.json").read_text()) if c["infra_index_field"]]
-
-# ---- Infrastructure indices -------------------------------------------------------------------
-# Baseline from urbanisation/literacy, then storyline overrides (0–100, higher = better).
-OVERRIDES = {
-    "Dahod": {"healthcare_index": 28, "road_index": 36, "water_index": 41, "education_index": 44, "connectivity_index": 38},
-    "Dang": {"road_index": 30, "healthcare_index": 34, "connectivity_index": 24, "education_index": 52},
-    "Narmada": {"healthcare_index": 36, "road_index": 40, "connectivity_index": 33},
-    "Tapi": {"healthcare_index": 42, "road_index": 44, "connectivity_index": 35},
-    "Chhota Udaipur": {"healthcare_index": 38, "education_index": 41, "road_index": 42},
-    "Kutch": {"water_index": 37, "disaster_resilience_index": 41, "irrigation_index": 35},
-    "Banaskantha": {"water_index": 42, "irrigation_index": 38, "healthcare_index": 48},
-    "Vav-Tharad": {"water_index": 36, "irrigation_index": 33, "healthcare_index": 40, "road_index": 45},
-    "Surat": {"water_index": 54, "sanitation_index": 57, "environment_index": 46, "housing_index": 52},
-    "Ahmedabad": {"environment_index": 39, "waste_index": 53, "sanitation_index": 62},
-    "Morbi": {"environment_index": 34, "water_index": 55},
-    "Vadodara": {"sanitation_index": 49, "disaster_resilience_index": 45},
-    "Gandhinagar": {"road_index": 88, "electricity_index": 90},
-    "Rajkot": {"public_space_index": 78, "water_index": 58},
-    "Surendranagar": {"water_index": 44, "irrigation_index": 40},
-    "Amreli": {"road_index": 47, "disaster_resilience_index": 44},
-    "Panchmahal": {"healthcare_index": 45, "road_index": 48},
-}
-rows = []
-for d in districts:
-    urban, lit = float(d["urban_pct"]), float(d["literacy_rate"])
-    base = 40 + 0.3 * urban + 0.25 * lit  # ~55 rural to ~85 metro
-    r = {"district": d["name"]}
-    for c in categories:
-        r[c["infra_index_field"]] = round(min(95, max(20, base + rng.uniform(-9, 9))), 1)
-    r.update(OVERRIDES.get(d["name"], {}))
-    idx = [v for k, v in r.items() if k != "district"]
-    r["overall_index"] = round(sum(idx) / len(idx), 1)
-    rows.append(r)
-with open(SEED_DIR / "infrastructure_indices.csv", "w", newline="") as f:
-    w = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
-    w.writeheader(); w.writerows(rows)
 
 # ---- Government projects ----------------------------------------------------------------------
 P = [
@@ -99,8 +66,8 @@ P = [
 ]
 with open(SEED_DIR / "government_projects.csv", "w", newline="") as f:
     w = csv.writer(f)
-    w.writerow(["district", "project_name", "category_code", "department", "scheme", "budget_inr_cr", "status", "planned_year", "start_date", "expected_completion"])
-    w.writerows(P)
+    w.writerow(["district", "state", "project_name", "category_code", "department", "scheme", "budget_inr_cr", "status", "planned_year", "start_date", "expected_completion"])
+    w.writerows([(d, "Gujarat", *rest) for d, *rest in P])
 
 # ---- Investment plans FY2026-27 (per district × category) --------------------------------------
 PER_CAPITA_CR_PER_LAKH = {  # crore per 1 lakh population, rough state-budget proportions
@@ -132,7 +99,7 @@ for d in districts:
         mult = INVEST_OVERRIDES.get((d["name"], code), rng.uniform(0.75, 1.25))
         alloc = round(PER_CAPITA_CR_PER_LAKH[code] * pop_lakh * mult, 2)
         rows.append({
-            "district": d["name"], "category_code": code, "fiscal_year": "2026-27",
+            "district": d["name"], "state": "Gujarat", "category_code": code, "fiscal_year": "2026-27",
             "allocated_inr_cr": alloc, "planned_inr_cr": round(alloc * rng.uniform(1.0, 1.4), 2),
             "spent_inr_cr": round(alloc * rng.uniform(0.15, 0.45), 2),
         })
@@ -140,4 +107,4 @@ with open(SEED_DIR / "investment_plans.csv", "w", newline="") as f:
     w = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
     w.writeheader(); w.writerows(rows)
 
-print(f"wrote infrastructure ({len(districts)}), projects ({len(P)}), investment ({len(rows)}) → {SEED_DIR}")
+print(f"wrote projects ({len(P)}), investment ({len(rows)}) for {PILOT_STATES} → {SEED_DIR}")

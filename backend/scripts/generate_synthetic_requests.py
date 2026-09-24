@@ -19,6 +19,10 @@ from app.utils.hashing import citizen_hash, new_tracking_code
 
 rng = random.Random(7)
 
+# Census demographics and indices cover all 640 districts of India; citizen reports are generated for
+# the state where the pilot is live. Widening the pilot is a change to this constant, nothing else.
+PILOT_STATE = "Gujarat"
+
 # ---- issue templates: category → list of (sub_category, urgency, problem_en, {lang: [phrasings]}) ---------------
 T = {
     "ROADS": [
@@ -114,12 +118,12 @@ T = {
 
 # ---- storylines: (district, category) → demand multiplier; growth = share of requests in the last 30 days ----------
 STORY = {
-    ("Dahod", "HEALTH"): (6.0, 0.25), ("Dahod", "ROADS"): (4.0, 0.2), ("Dang", "ROADS"): (5.0, 0.2), ("Dang", "CONNECTIVITY"): (3.0, 0.2),
-    ("Narmada", "HEALTH"): (4.0, 0.2), ("Tapi", "HEALTH"): (2.5, 0.2), ("Chhota Udaipur", "EDUCATION"): (3.0, 0.2),
-    ("Kutch", "WATER"): (4.0, 0.2), ("Vav-Tharad", "WATER"): (4.5, 0.2), ("Banaskantha", "WATER"): (3.0, 0.2), ("Banaskantha", "AGRI"): (2.5, 0.2),
+    ("Dohad", "HEALTH"): (6.0, 0.25), ("Dohad", "ROADS"): (4.0, 0.2), ("The Dangs", "ROADS"): (5.0, 0.2), ("The Dangs", "CONNECTIVITY"): (3.0, 0.2),
+    ("Narmada", "HEALTH"): (4.0, 0.2), ("Tapi", "HEALTH"): (2.5, 0.2), ("Vadodara", "EDUCATION"): (3.0, 0.2),
+    ("Kachchh", "WATER"): (4.0, 0.2), ("Banas Kantha", "WATER"): (4.5, 0.2), ("Banas Kantha", "WATER"): (3.0, 0.2), ("Banas Kantha", "AGRI"): (2.5, 0.2),
     ("Surat", "WATER"): (3.5, 0.55), ("Surat", "SANITATION"): (2.5, 0.4), ("Ahmedabad", "ENVIRONMENT"): (3.0, 0.3), ("Ahmedabad", "WASTE"): (2.0, 0.2),
-    ("Morbi", "ENVIRONMENT"): (4.0, 0.3), ("Vadodara", "SANITATION"): (3.0, 0.45), ("Surendranagar", "WATER"): (2.5, 0.2),
-    ("Amreli", "DISASTER"): (2.5, 0.3), ("Panchmahal", "HEALTH"): (2.0, 0.2), ("Aravalli", "ROADS"): (2.5, 0.2), ("Kheda", "SANITATION"): (2.0, 0.2),
+    ("Rajkot", "ENVIRONMENT"): (4.0, 0.3), ("Vadodara", "SANITATION"): (3.0, 0.45), ("Surendranagar", "WATER"): (2.5, 0.2),
+    ("Amreli", "DISASTER"): (2.5, 0.3), ("Panch Mahals", "HEALTH"): (2.0, 0.2), ("Sabar Kantha", "ROADS"): (2.5, 0.2), ("Kheda", "SANITATION"): (2.0, 0.2),
     ("Gandhinagar", "ROADS"): (0.15, 0.2), ("Rajkot", "PUBLIC_SPACE"): (0.2, 0.2),
 }
 CATEGORY_BASE = {"ROADS": 1.6, "WATER": 1.7, "SANITATION": 1.0, "WASTE": 0.7, "ELECTRICITY": 1.0, "STREETLIGHT": 0.5, "HEALTH": 1.1, "EDUCATION": 0.7,
@@ -140,7 +144,7 @@ def pick(weighted):
 def main(n: int) -> None:
     now = datetime.now(timezone.utc)
     with SessionLocal() as db:
-        state = db.query(GeographicEntity).filter_by(level=GeoLevel.STATE, name="Gujarat").one()
+        state = db.query(GeographicEntity).filter_by(level=GeoLevel.STATE, name=PILOT_STATE).one()
         districts = db.query(GeographicEntity).filter_by(parent_id=state.id, level=GeoLevel.DISTRICT).all()
         demo = {d.geo_id: d for d in db.query(Demographics)}
 

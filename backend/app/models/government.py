@@ -33,6 +33,7 @@ class DatasetMetadata(TimestampMixin, Base):
     update_frequency: Mapped[str | None] = mapped_column(String(40))
     license: Mapped[str | None] = mapped_column(String(120))
     is_synthetic: Mapped[bool] = mapped_column(default=False)  # demo data must be labelled honestly
+    coverage: Mapped[str | None] = mapped_column(String(80))  # e.g. "36 states/UTs, 640 districts"
     notes: Mapped[str | None] = mapped_column(Text)
     row_count: Mapped[int | None] = mapped_column(Integer)
     status: Mapped[DatasetStatus] = mapped_column(Enum(DatasetStatus, name="dataset_status"), default=DatasetStatus.ACTIVE)

@@ -1,41 +1,41 @@
-district,project_name,category_code,department,scheme,budget_inr_cr,status,planned_year,start_date,expected_completion
-Surat,Surat bulk water augmentation & Tapi intake upgrade,WATER,Surat Municipal Corporation,AMRUT 2.0,850,PLANNED,2026,,2029-03-31
-Dang,"PMGSY-III all-weather roads, Ahwa–Subir–Waghai",ROADS,Rural Development,PMGSY,120,NOT_STARTED,2025,,2028-03-31
-Kutch,Narmada canal Kutch branch extension (Phase 2),WATER,Sardar Sarovar Narmada Nigam,SSNNL,1200,IN_PROGRESS,2023,2023-10-01,2027-06-30
-Ahmedabad,"AMC clean-air action plan (dust, industrial monitoring)",ENVIRONMENT,Ahmedabad Municipal Corporation,NCAP,90,IN_PROGRESS,2024,2024-06-01,2026-12-31
-Vadodara,Vishwamitri flood mitigation & storm-water network,SANITATION,Vadodara Municipal Corporation,State,250,APPROVED,2026,,2028-06-30
-Gandhinagar,"Six-lane ring road & flyovers, GUDA",ROADS,Roads & Buildings,State,640,IN_PROGRESS,2024,2024-01-15,2027-03-31
-Gandhinagar,GIFT City arterial road upgrade,ROADS,Roads & Buildings,State,210,IN_PROGRESS,2025,2025-02-01,2026-12-31
-Rajkot,Rajkot smart parks & riverfront promenade,PUBLIC_SPACE,Rajkot Municipal Corporation,Smart Cities,180,IN_PROGRESS,2024,2024-04-01,2026-10-31
-Rajkot,Aji-3 water supply strengthening,WATER,Rajkot Municipal Corporation,AMRUT 2.0,140,COMPLETED,2023,2023-01-10,2025-12-31
-Banaskantha,Sujalam Sufalam canal desilting & lining,AGRI,Water Resources,SSY,95,IN_PROGRESS,2025,2025-03-01,2026-11-30
-Vav-Tharad,Tharad regional water grid connection,WATER,Water Supply Dept,JJM,160,PLANNED,2027,,2029-12-31
-Narmada,Rajpipla district hospital upgrade (100 beds),HEALTH,Health & Family Welfare,PM-ABHIM,65,NOT_STARTED,2025,,2027-09-30
-Tapi,Vyara PHC network strengthening (6 PHCs),HEALTH,Health & Family Welfare,PM-ABHIM,28,IN_PROGRESS,2025,2025-06-01,2026-12-31
-Chhota Udaipur,Residential schools for tribal blocks (3),EDUCATION,Tribal Development,EMRS,54,IN_PROGRESS,2024,2024-08-01,2026-08-31
-Morbi,Ceramic cluster common effluent treatment plant,ENVIRONMENT,GPCB,State,75,PLANNED,2027,,2029-03-31
-Surat,Surat BRTS Phase 3 & feeder buses,ROADS,Surat Municipal Corporation,Smart Cities,320,IN_PROGRESS,2024,2024-03-01,2026-12-31
-Ahmedabad,Pirana legacy waste bio-mining,WASTE,Ahmedabad Municipal Corporation,SBM-U 2.0,110,IN_PROGRESS,2023,2023-05-01,2026-09-30
-Bhavnagar,Bhavnagar coastal cyclone shelters (8),DISASTER,GSDMA,NCRMP,40,COMPLETED,2022,2022-04-01,2024-12-31
-Jamnagar,Jamnagar cyclone shelters & early warning sirens,DISASTER,GSDMA,NCRMP,36,IN_PROGRESS,2025,2025-01-01,2026-12-31
-Junagadh,Junagadh–Veraval road widening,ROADS,Roads & Buildings,State,190,IN_PROGRESS,2024,2024-09-01,2027-03-31
-Kheda,Nadiad sewage treatment plant 40 MLD,SANITATION,Nadiad Municipality,AMRUT 2.0,85,IN_PROGRESS,2025,2025-04-01,2027-03-31
-Anand,Anand–Khambhat rural roads package,ROADS,Rural Development,PMGSY,60,COMPLETED,2022,2022-06-01,2024-10-31
-Mehsana,Mehsana 24x7 water supply pilot,WATER,Water Supply Dept,AMRUT 2.0,70,IN_PROGRESS,2025,2025-05-01,2026-12-31
-Patan,Patan solar-powered irrigation feeders,AGRI,Energy,PM-KUSUM,45,IN_PROGRESS,2025,2025-07-01,2027-03-31
-Sabarkantha,Himmatnagar district hospital expansion,HEALTH,Health & Family Welfare,State,55,IN_PROGRESS,2024,2024-11-01,2026-11-30
-Aravalli,Modasa rural road connectivity,ROADS,Rural Development,PMGSY,48,STALLED,2023,2023-08-01,2025-12-31
-Mahisagar,Lunawada water treatment plant,WATER,Water Supply Dept,JJM,38,IN_PROGRESS,2025,2025-02-01,2026-12-31
-Panchmahal,Godhra PHC upgrades (4) & ambulance fleet,HEALTH,Health & Family Welfare,PM-ABHIM,22,PLANNED,2027,,2028-12-31
-Devbhumi Dwarka,Okha coastal road & cyclone shelter,DISASTER,GSDMA,NCRMP,30,PLANNED,2027,,2029-03-31
-Porbandar,Porbandar fishing harbour road,ROADS,Roads & Buildings,State,25,IN_PROGRESS,2025,2025-03-01,2026-12-31
-Gir Somnath,Veraval sewerage network,SANITATION,Veraval Municipality,AMRUT 2.0,42,IN_PROGRESS,2024,2024-10-01,2026-12-31
-Amreli,Amreli coastal embankment repairs,DISASTER,Irrigation,State,33,NOT_STARTED,2026,,2027-12-31
-Botad,Botad regional water pipeline,WATER,Water Supply Dept,JJM,52,IN_PROGRESS,2025,2025-01-15,2026-12-31
-Navsari,Navsari–Bilimora flood protection,DISASTER,Irrigation,State,48,APPROVED,2026,,2028-03-31
-Valsad,Vapi industrial effluent monitoring,ENVIRONMENT,GPCB,State,20,IN_PROGRESS,2025,2025-06-01,2026-12-31
-Bharuch,Ankleshwar CETP upgrade,ENVIRONMENT,GPCB,State,68,IN_PROGRESS,2024,2024-04-01,2026-12-31
-Surendranagar,Surendranagar Narmada-based water grid,WATER,Water Supply Dept,JJM,110,IN_PROGRESS,2024,2024-07-01,2027-03-31
-Morbi,Morbi–Rajkot highway four-laning,ROADS,NHAI,Bharatmala,410,IN_PROGRESS,2023,2023-11-01,2026-12-31
-Dahod,Dahod smart city roads package,ROADS,Dahod Smart City,Smart Cities,95,IN_PROGRESS,2023,2023-09-01,2026-12-31
-Ahmedabad,Sabarmati riverfront Phase 2,PUBLIC_SPACE,Ahmedabad Municipal Corporation,State,850,IN_PROGRESS,2023,2023-01-01,2027-12-31
+district,state,project_name,category_code,department,scheme,budget_inr_cr,status,planned_year,start_date,expected_completion
+Surat,Gujarat,Surat bulk water augmentation & Tapi intake upgrade,WATER,Surat Municipal Corporation,AMRUT 2.0,850,PLANNED,2026,,2029-03-31
+The Dangs,Gujarat,"PMGSY-III all-weather roads, Ahwa–Subir–Waghai",ROADS,Rural Development,PMGSY,120,NOT_STARTED,2025,,2028-03-31
+Kachchh,Gujarat,Narmada canal Kutch branch extension (Phase 2),WATER,Sardar Sarovar Narmada Nigam,SSNNL,1200,IN_PROGRESS,2023,2023-10-01,2027-06-30
+Ahmadabad,Gujarat,"AMC clean-air action plan (dust, industrial monitoring)",ENVIRONMENT,Ahmedabad Municipal Corporation,NCAP,90,IN_PROGRESS,2024,2024-06-01,2026-12-31
+Vadodara,Gujarat,Vishwamitri flood mitigation & storm-water network,SANITATION,Vadodara Municipal Corporation,State,250,APPROVED,2026,,2028-06-30
+Gandhinagar,Gujarat,"Six-lane ring road & flyovers, GUDA",ROADS,Roads & Buildings,State,640,IN_PROGRESS,2024,2024-01-15,2027-03-31
+Gandhinagar,Gujarat,GIFT City arterial road upgrade,ROADS,Roads & Buildings,State,210,IN_PROGRESS,2025,2025-02-01,2026-12-31
+Rajkot,Gujarat,Rajkot smart parks & riverfront promenade,PUBLIC_SPACE,Rajkot Municipal Corporation,Smart Cities,180,IN_PROGRESS,2024,2024-04-01,2026-10-31
+Rajkot,Gujarat,Aji-3 water supply strengthening,WATER,Rajkot Municipal Corporation,AMRUT 2.0,140,COMPLETED,2023,2023-01-10,2025-12-31
+Banas Kantha,Gujarat,Sujalam Sufalam canal desilting & lining,AGRI,Water Resources,SSY,95,IN_PROGRESS,2025,2025-03-01,2026-11-30
+Banas Kantha,Gujarat,Tharad regional water grid connection,WATER,Water Supply Dept,JJM,160,PLANNED,2027,,2029-12-31
+Narmada,Gujarat,Rajpipla district hospital upgrade (100 beds),HEALTH,Health & Family Welfare,PM-ABHIM,65,NOT_STARTED,2025,,2027-09-30
+Tapi,Gujarat,Vyara PHC network strengthening (6 PHCs),HEALTH,Health & Family Welfare,PM-ABHIM,28,IN_PROGRESS,2025,2025-06-01,2026-12-31
+Vadodara,Gujarat,Residential schools for tribal blocks (3),EDUCATION,Tribal Development,EMRS,54,IN_PROGRESS,2024,2024-08-01,2026-08-31
+Rajkot,Gujarat,Ceramic cluster common effluent treatment plant,ENVIRONMENT,GPCB,State,75,PLANNED,2027,,2029-03-31
+Surat,Gujarat,Surat BRTS Phase 3 & feeder buses,ROADS,Surat Municipal Corporation,Smart Cities,320,IN_PROGRESS,2024,2024-03-01,2026-12-31
+Ahmadabad,Gujarat,Pirana legacy waste bio-mining,WASTE,Ahmedabad Municipal Corporation,SBM-U 2.0,110,IN_PROGRESS,2023,2023-05-01,2026-09-30
+Bhavnagar,Gujarat,Bhavnagar coastal cyclone shelters (8),DISASTER,GSDMA,NCRMP,40,COMPLETED,2022,2022-04-01,2024-12-31
+Jamnagar,Gujarat,Jamnagar cyclone shelters & early warning sirens,DISASTER,GSDMA,NCRMP,36,IN_PROGRESS,2025,2025-01-01,2026-12-31
+Junagadh,Gujarat,Junagadh–Veraval road widening,ROADS,Roads & Buildings,State,190,IN_PROGRESS,2024,2024-09-01,2027-03-31
+Kheda,Gujarat,Nadiad sewage treatment plant 40 MLD,SANITATION,Nadiad Municipality,AMRUT 2.0,85,IN_PROGRESS,2025,2025-04-01,2027-03-31
+Anand,Gujarat,Anand–Khambhat rural roads package,ROADS,Rural Development,PMGSY,60,COMPLETED,2022,2022-06-01,2024-10-31
+Mahesana,Gujarat,Mehsana 24x7 water supply pilot,WATER,Water Supply Dept,AMRUT 2.0,70,IN_PROGRESS,2025,2025-05-01,2026-12-31
+Patan,Gujarat,Patan solar-powered irrigation feeders,AGRI,Energy,PM-KUSUM,45,IN_PROGRESS,2025,2025-07-01,2027-03-31
+Sabar Kantha,Gujarat,Himmatnagar district hospital expansion,HEALTH,Health & Family Welfare,State,55,IN_PROGRESS,2024,2024-11-01,2026-11-30
+Sabar Kantha,Gujarat,Modasa rural road connectivity,ROADS,Rural Development,PMGSY,48,STALLED,2023,2023-08-01,2025-12-31
+Panch Mahals,Gujarat,Lunawada water treatment plant,WATER,Water Supply Dept,JJM,38,IN_PROGRESS,2025,2025-02-01,2026-12-31
+Panch Mahals,Gujarat,Godhra PHC upgrades (4) & ambulance fleet,HEALTH,Health & Family Welfare,PM-ABHIM,22,PLANNED,2027,,2028-12-31
+Jamnagar,Gujarat,Okha coastal road & cyclone shelter,DISASTER,GSDMA,NCRMP,30,PLANNED,2027,,2029-03-31
+Porbandar,Gujarat,Porbandar fishing harbour road,ROADS,Roads & Buildings,State,25,IN_PROGRESS,2025,2025-03-01,2026-12-31
+Junagadh,Gujarat,Veraval sewerage network,SANITATION,Veraval Municipality,AMRUT 2.0,42,IN_PROGRESS,2024,2024-10-01,2026-12-31
+Amreli,Gujarat,Amreli coastal embankment repairs,DISASTER,Irrigation,State,33,NOT_STARTED,2026,,2027-12-31
+Bhavnagar,Gujarat,Botad regional water pipeline,WATER,Water Supply Dept,JJM,52,IN_PROGRESS,2025,2025-01-15,2026-12-31
+Navsari,Gujarat,Navsari–Bilimora flood protection,DISASTER,Irrigation,State,48,APPROVED,2026,,2028-03-31
+Valsad,Gujarat,Vapi industrial effluent monitoring,ENVIRONMENT,GPCB,State,20,IN_PROGRESS,2025,2025-06-01,2026-12-31
+Bharuch,Gujarat,Ankleshwar CETP upgrade,ENVIRONMENT,GPCB,State,68,IN_PROGRESS,2024,2024-04-01,2026-12-31
+Surendranagar,Gujarat,Surendranagar Narmada-based water grid,WATER,Water Supply Dept,JJM,110,IN_PROGRESS,2024,2024-07-01,2027-03-31
+Rajkot,Gujarat,Morbi–Rajkot highway four-laning,ROADS,NHAI,Bharatmala,410,IN_PROGRESS,2023,2023-11-01,2026-12-31
+Dohad,Gujarat,Dahod smart city roads package,ROADS,Dahod Smart City,Smart Cities,95,IN_PROGRESS,2023,2023-09-01,2026-12-31
+Ahmadabad,Gujarat,Sabarmati riverfront Phase 2,PUBLIC_SPACE,Ahmedabad Municipal Corporation,State,850,IN_PROGRESS,2023,2023-01-01,2027-12-31
