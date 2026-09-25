@@ -103,8 +103,12 @@ export default function PolicymakerPage() {
         <span>viewing <b style={{ color: COLOR.ink }}>{summary.state}</b> · pilot live in <b style={{ color: COLOR.ink }}>Gujarat</b></span>
         <span style={{ color: COLOR.grid }}>|</span>
         {warehouse?.enabled
-          ? <StatusChip tone="good" title={warehouse.purpose}>BigQuery national layer live</StatusChip>
-          : <StatusChip tone="neutral" title={warehouse?.purpose}>BigQuery layer not configured — running on Postgres</StatusChip>}
+          ? <StatusChip tone="good" title={`${warehouse.dataset} — ${Object.entries(warehouse.row_counts || {}).map(([t, n]) => `${t}: ${n} rows`).join(', ')}`}>
+              BigQuery national layer live
+            </StatusChip>
+          : <StatusChip tone="neutral" title={warehouse?.reason || warehouse?.purpose}>
+              running on Postgres{warehouse?.configured ? ' — BigQuery not synced yet' : ''}
+            </StatusChip>}
       </div>
 
       {summary.total_requests === 0 && (
@@ -142,6 +146,11 @@ export default function PolicymakerPage() {
         <div className="space-y-4">
           <Panel icon={AccountBalanceIcon} title="Is the money going where the need is?"
             explain="Each dot is one district in one sector. Right = citizens report more per head. Up = more rupees budgeted per head. Colour is the gap between those two ranks: red means demand outruns spending, blue means spending outruns demand.">
+            {scatter.length === 0 ? (
+              <Empty icon={AccountBalanceIcon}>
+                No citizen reports in {summary.state} yet, so there is no demand to compare spending against.
+              </Empty>
+            ) : (
             <ResponsiveContainer width="100%" height={250}>
               <ScatterChart margin={{ top: 8, right: 14, bottom: 26, left: 6 }}>
                 <CartesianGrid stroke={COLOR.grid} strokeDasharray="3 3" />
@@ -165,6 +174,8 @@ export default function PolicymakerPage() {
                 </Scatter>
               </ScatterChart>
             </ResponsiveContainer>
+            )}
+            {scatter.length > 0 && (
             <div className="mt-2 flex flex-wrap items-center gap-3 text-xs" style={{ color: COLOR.muted }}>
               <span className="flex items-center gap-1.5">
                 <span className="h-2.5 w-16 rounded-full" style={{ background: `linear-gradient(90deg, ${diverging(-100)}, ${diverging(0)}, ${diverging(100)})` }} />
@@ -173,10 +184,14 @@ export default function PolicymakerPage() {
               <span>spending outruns demand →</span>
               <span className="ml-auto">dot size = citizens reporting</span>
             </div>
+            )}
           </Panel>
 
           <Panel icon={ShowChartIcon} title="Is it getting better or worse?"
             explain="Unique citizens reporting each month. A rising line means a problem is spreading, which the priority score weights separately from its absolute size.">
+            {trendSeries.length === 0 ? (
+              <Empty icon={ShowChartIcon}>No reports yet in {summary.state} — the trend begins when people start reporting.</Empty>
+            ) : (
             <ResponsiveContainer width="100%" height={170}>
               <LineChart data={trendSeries} margin={{ top: 8, right: 14, bottom: 4, left: 6 }}>
                 <CartesianGrid stroke={COLOR.grid} strokeDasharray="3 3" vertical={false} />
@@ -190,6 +205,7 @@ export default function PolicymakerPage() {
                   activeDot={{ r: 4, fill: COLOR.seq[3], stroke: '#fff', strokeWidth: 2 }} isAnimationActive={false} />
               </LineChart>
             </ResponsiveContainer>
+            )}
           </Panel>
         </div>
       </div>

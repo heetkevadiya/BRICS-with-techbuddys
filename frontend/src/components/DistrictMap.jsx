@@ -73,9 +73,9 @@ function SvgDistrictMap({ geojson, metric = 'priority_score', metricLabel = 'Pri
           const isSelected = s.props.geo_id === selected
           return (
             <path key={s.props.geo_id} d={s.d}
-              fill={s.props.unique_citizens ? sequential((s.props[metric] || 0) / max) : COLOR.page}
-              stroke={isSelected ? COLOR.ink : '#ffffff'}
-              strokeWidth={isSelected ? 2 : 0.8}
+              fill={s.props.unique_citizens ? sequential((s.props[metric] || 0) / max) : '#e8e8e4'}
+              stroke={isSelected ? COLOR.ink : s.props.unique_citizens ? '#ffffff' : COLOR.axis}
+              strokeWidth={isSelected ? 2 : 0.9}
               strokeLinejoin="round"
               className="cursor-pointer transition-opacity hover:opacity-75"
               onMouseEnter={() => setHover(s.props)}

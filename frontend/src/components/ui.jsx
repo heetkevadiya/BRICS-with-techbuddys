@@ -62,7 +62,8 @@ export function Panel({ icon: Icon, title, explain, actions, children, className
             </h2>
             {explain && <div className="mt-1.5 max-w-3xl"><Explain>{explain}</Explain></div>}
           </div>
-          {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
+          {/* no shrink-0: a long row of status chips has to be allowed to wrap on a phone */}
+          {actions && <div className="flex min-w-0 flex-wrap items-center gap-2">{actions}</div>}
         </header>
       )}
       <div className="p-4">{children}</div>

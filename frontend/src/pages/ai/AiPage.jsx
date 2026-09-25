@@ -62,7 +62,8 @@ export default function AiPage() {
       <div className="grid gap-4 lg:grid-cols-2">
         <Panel icon={ScienceIcon} title="Accuracy by language"
           explain="Measured per language, not averaged. A good overall score can hide one badly served language, which in a multilingual country is the failure that matters.">
-          <table className="w-full text-left text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[340px] text-left text-sm">
             <thead className="text-xs uppercase" style={{ color: COLOR.muted }}>
               <tr><th className="py-1.5 font-medium">Language</th><th className="font-medium">Cases</th>
                 <th className="font-medium">Category</th><th className="font-medium">Urgency error</th>
@@ -84,6 +85,7 @@ export default function AiPage() {
               })}
             </tbody>
           </table>
+          </div>
         </Panel>
 
         <Panel icon={SpeedIcon} title="Confidence, and what happens next"
@@ -141,7 +143,8 @@ export default function AiPage() {
       {compare && (
         <Panel icon={PaidIcon} title="A cost decision, measured rather than assumed"
           explain="Gemini 2.5 can spend reasoning tokens before answering. For structured extraction it changed no categorical outcome and was marginally worse on urgency, so it is switched off — a large saving at no accuracy cost.">
-          <table className="w-full text-left text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[340px] text-left text-sm">
             <thead className="text-xs uppercase" style={{ color: COLOR.muted }}>
               <tr><th className="py-1.5 font-medium">Thinking budget</th><th className="font-medium">Category</th>
                 <th className="font-medium">District</th><th className="font-medium">Urgency error</th>
@@ -162,6 +165,7 @@ export default function AiPage() {
               ))}
             </tbody>
           </table>
+          </div>
           <p className="mt-2 text-xs" style={{ color: COLOR.muted }}>
             Model {ev.model} · evaluated {new Date(ev.run_at).toLocaleDateString('en-IN', { dateStyle: 'medium' })} ·
             reproduce with <code>python -m scripts.eval_thinking_budget</code>
