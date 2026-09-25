@@ -196,6 +196,23 @@ def main(n: int) -> None:
             if created % 500 == 0:
                 db.flush(); print(f"  {created} requests")
         db.flush()
+
+        # Link repeat reports the way the live pipeline does, so "one citizen reporting five times
+        # is one citizen" is visible in the data and not merely asserted.
+        linked = 0
+        seen: dict[tuple, int] = {}
+        for r in (db.query(CitizenRequest)
+                  .filter(CitizenRequest.citizen_hash.isnot(None))
+                  .order_by(CitizenRequest.cluster_id, CitizenRequest.submitted_at)):
+            key = (r.cluster_id, r.citizen_hash)
+            first = seen.get(key)
+            if first is None:
+                seen[key] = r.id
+            else:
+                r.duplicate_of_id = first
+                linked += 1
+        print(f"  linked {linked} repeat reports to an earlier one")
+
         for cl in clusters.values():
             refresh_cluster_stats(db, cl)
         db.commit()

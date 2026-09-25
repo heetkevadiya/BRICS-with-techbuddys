@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import config as config_api
-from app.api import dashboard, datasets, recommendations, requests
+from app.api import ai, dashboard, datasets, recommendations, requests
 from app.core.config import settings
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -27,7 +27,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-for r in (requests.router, dashboard.router, recommendations.router, datasets.router, config_api.router):
+for r in (requests.router, dashboard.router, recommendations.router, datasets.router, ai.router, config_api.router):
     app.include_router(r, prefix="/api")
 
 

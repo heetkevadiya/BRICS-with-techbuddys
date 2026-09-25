@@ -34,6 +34,7 @@ def generate_structured(prompt: str | list, schema: type[T], *, temperature: flo
         temperature=temperature,
         response_mime_type="application/json",
         response_schema=schema,
+        thinking_config=types.ThinkingConfig(thinking_budget=settings.gemini_thinking_budget),
     )
     last_err: Exception | None = None
     for attempt in range(2):

@@ -16,6 +16,12 @@ class Settings(BaseSettings):
     gemini_api_key: str = ""
     gemini_model: str = "gemini-2.5-flash"
     gemini_embedding_model: str = "gemini-embedding-001"
+    # Gemini 2.5 spends "thinking" tokens before answering. For extraction it buys nothing:
+    # `python -m scripts.eval_thinking_budget` over 22 labelled cases (4 languages, all 17
+    # categories) scores 22/22 on category, district and language either way, and thinking is
+    # marginally WORSE on urgency (MAE 1.23 vs 1.14) while costing 2.8x more (779 vs 232 output
+    # tokens). Re-run that script before changing this. -1 lets the model decide, 0 disables it.
+    gemini_thinking_budget: int = 0
     google_application_credentials: str = ""
     google_cloud_project: str = ""
     bigquery_dataset: str = "citizen_demand"

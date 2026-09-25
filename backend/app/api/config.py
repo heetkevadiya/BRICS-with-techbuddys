@@ -3,9 +3,12 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
+from sqlalchemy import func
+
+from app.analytics.aggregation import VALID_STATUSES
 from app.core.config import settings
 from app.db.session import get_db
-from app.models import Category, GeographicEntity, GeoLevel
+from app.models import Category, CitizenRequest, Demographics, GeographicEntity, GeoLevel
 from app.services.priority_service import weights
 
 router = APIRouter(prefix="/config", tags=["config"])
@@ -38,3 +41,25 @@ def languages():
     return {"tier1": ["gu", "hi", "en", "hi-Latn"], "tier2": ["mr", "bn", "ta", "te", "kn", "ml", "pa", "or", "ur", "as"],
             "labels": {"gu": "ગુજરાતી", "hi": "हिन्दी", "en": "English", "hi-Latn": "Hinglish", "mr": "मराठी", "bn": "বাংলা", "ta": "தமிழ்",
                        "te": "తెలుగు", "kn": "ಕನ್ನಡ", "ml": "മലയാളം", "pa": "ਪੰਜਾਬੀ", "or": "ଓଡ଼ିଆ", "ur": "اردو", "as": "অসমীয়া"}}
+
+
+@router.get("/coverage")
+def coverage(db: Session = Depends(get_db)):
+    """Headline scale, for the public landing page. Aggregates only — no citizen data."""
+    valid = db.query(CitizenRequest).filter(
+        CitizenRequest.processing_status.in_(VALID_STATUSES), CitizenRequest.is_flagged.is_(False))
+    langs = dict(valid.with_entities(CitizenRequest.detected_language, func.count())
+                 .group_by(CitizenRequest.detected_language).order_by(func.count().desc()).all())
+    return {
+        "national": {
+            "states": db.query(GeographicEntity).filter_by(level=GeoLevel.STATE).count(),
+            "districts": db.query(GeographicEntity).filter_by(level=GeoLevel.DISTRICT).count(),
+            "population": int(db.query(func.sum(Demographics.population)).scalar() or 0),
+        },
+        "total_requests": valid.count(),
+        "unique_citizens": valid.with_entities(
+            func.count(func.distinct(func.coalesce(
+                CitizenRequest.citizen_hash, func.cast(CitizenRequest.id, __import__("sqlalchemy").String))))).scalar() or 0,
+        "languages": {k or "unknown": v for k, v in langs.items()},
+        "pilot_state": settings.default_state,
+    }
