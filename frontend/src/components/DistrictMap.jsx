@@ -3,17 +3,46 @@
  *  Hover layer is on by default, per the data-viz interaction rule. */
 import { useEffect, useMemo, useRef, useState } from 'react'
 import ChartTooltip from './Tooltip'
+import MapOutlinedIcon from '@mui/icons-material/MapOutlined'
+import PublicOutlinedIcon from '@mui/icons-material/PublicOutlined'
 import GoogleDistrictMap from './GoogleDistrictMap'
 import { COLOR, sequential } from '../theme'
 import { num } from '../format'
 
-/** Google Maps when a key is configured and loads; inline SVG otherwise.
+/** Districts with no citizen reports. Deliberately off the blue ramp and off the page background,
+ *  so "nobody has written in from here" never reads as "lowest priority" or as a rendering gap. */
+const NO_REPORTS = '#e8e8e4'
+
+/** Two ways to draw the same districts.
+ *  Outline is the default: the choropleth IS the data, and road, label and terrain tiles compete
+ *  with it for the reader's attention. The Google basemap stays one click away, for the moment you
+ *  need to see where a district sits relative to cities and the coast.
  *  The SVG path needs no key, no network and no billing, so the demo always has a map. */
 export default function DistrictMap(props) {
   const [mapsFailed, setMapsFailed] = useState(false)
-  const hasKey = Boolean(import.meta.env.VITE_GOOGLE_MAPS_API_KEY)
-  if (hasKey && !mapsFailed) return <GoogleDistrictMap {...props} onError={() => setMapsFailed(true)} />
-  return <SvgDistrictMap {...props} />
+  const [basemap, setBasemap] = useState(false)
+  const googleReady = Boolean(import.meta.env.VITE_GOOGLE_MAPS_API_KEY) && !mapsFailed
+
+  return (
+    <div>
+      {googleReady && (
+        <div className="mb-2 flex justify-end gap-1">
+          {[[MapOutlinedIcon, 'Outline', false], [PublicOutlinedIcon, 'Google basemap', true]].map(([Icon, label, on]) => (
+            <button key={label} type="button" onClick={() => setBasemap(on)} aria-pressed={basemap === on}
+              className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs ring-1 transition-colors"
+              style={basemap === on
+                ? { background: COLOR.ink, color: '#ffffff', '--tw-ring-color': COLOR.ink }
+                : { color: COLOR.ink2, '--tw-ring-color': COLOR.grid }}>
+              <Icon sx={{ fontSize: 14 }} />{label}
+            </button>
+          ))}
+        </div>
+      )}
+      {googleReady && basemap
+        ? <GoogleDistrictMap {...props} onError={() => setMapsFailed(true)} />
+        : <SvgDistrictMap {...props} />}
+    </div>
+  )
 }
 
 function SvgDistrictMap({ geojson, metric = 'priority_score', metricLabel = 'Priority', selected, onSelect }) {
@@ -64,16 +93,19 @@ function SvgDistrictMap({ geojson, metric = 'priority_score', metricLabel = 'Pri
   const active = hover || shapes.find((s) => s.props.geo_id === selected)?.props
 
   return (
-    <div ref={wrap} className="relative" onMouseMove={(e) => {
+    <div ref={wrap} className="relative w-full" onMouseMove={(e) => {
       const r = wrap.current.getBoundingClientRect()
       setCursor({ x: e.clientX - r.left, y: e.clientY - r.top })
     }}>
-      <svg width={size.w} height={size.h} className="block" role="img" aria-label={`${metricLabel} by district`}>
+      {/* viewBox + width:100% keeps the drawing crisp while giving the <svg> no intrinsic width —
+          a pixel width attribute makes the grid track grow to 640px and pushes the page sideways on a phone */}
+      <svg viewBox={`0 0 ${size.w} ${size.h}`} width="100%" height={size.h} className="block"
+        role="img" aria-label={`${metricLabel} by district`}>
         {shapes.map((s) => {
           const isSelected = s.props.geo_id === selected
           return (
             <path key={s.props.geo_id} d={s.d}
-              fill={s.props.unique_citizens ? sequential((s.props[metric] || 0) / max) : '#e8e8e4'}
+              fill={s.props.unique_citizens ? sequential((s.props[metric] || 0) / max) : NO_REPORTS}
               stroke={isSelected ? COLOR.ink : s.props.unique_citizens ? '#ffffff' : COLOR.axis}
               strokeWidth={isSelected ? 2 : 0.9}
               strokeLinejoin="round"
@@ -106,7 +138,7 @@ function SvgDistrictMap({ geojson, metric = 'priority_score', metricLabel = 'Pri
         <span className="tnum">{Math.round(max)}</span>
         <span className="ml-1">{metricLabel}</span>
         <span className="ml-3 flex items-center gap-1">
-          <i className="inline-block h-2.5 w-2.5 rounded-sm ring-1" style={{ background: COLOR.page, '--tw-ring-color': COLOR.grid }} />no reports
+          <i className="inline-block h-2.5 w-2.5 rounded-sm ring-1" style={{ background: NO_REPORTS, '--tw-ring-color': COLOR.axis }} />no reports
         </span>
       </div>
 

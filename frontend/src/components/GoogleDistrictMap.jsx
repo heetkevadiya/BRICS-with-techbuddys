@@ -37,7 +37,7 @@ export default function GoogleDistrictMap({ geojson, metric = 'priority_score', 
   // ref it cannot re-trigger the effect below — building a second Map on the same <div> would
   // silently replace the one holding the districts, leaving bare tiles and no choropleth.
   const onErrorRef = useRef(onError)
-  onErrorRef.current = onError
+  useEffect(() => { onErrorRef.current = onError })
 
   useEffect(() => {
     let cancelled = false
