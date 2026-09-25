@@ -31,16 +31,19 @@ import DistrictMap from '../../components/DistrictMap'
 import { COLOR, REC_TYPE, diverging } from '../../theme'
 
 export default function PolicymakerPage() {
+  const [state, setState] = useState('')
   const [category, setCategory] = useState('')
   const [district, setDistrict] = useState(null)
   const [openRec, setOpenRec] = useState(null)
+  const q = { state: state || undefined, category: category || undefined }
 
   const { data: cats } = useApi(() => api.configCategories(), [])
-  const { data: summary, error, loading } = useApi(() => api.summary({}), [])
-  const { data: geo } = useApi(() => api.geo({ category: category || undefined }), [category])
-  const { data: recs } = useApi(() => api.recommendations({ category: category || undefined, district: district?.district, limit: 30 }), [category, district?.district])
-  const { data: align } = useApi(() => api.alignment({ category: category || undefined }), [category])
-  const { data: trends } = useApi(() => api.trends({ category: category || undefined, months: 6 }), [category])
+  const { data: states } = useApi(() => api.states(), [])
+  const { data: summary, error, loading } = useApi(() => api.summary({ state: state || undefined }), [state])
+  const { data: geo } = useApi(() => api.geo(q), [state, category])
+  const { data: recs } = useApi(() => api.recommendations({ ...q, district: district?.district, limit: 30 }), [state, category, district?.district])
+  const { data: align } = useApi(() => api.alignment(q), [state, category])
+  const { data: trends } = useApi(() => api.trends({ ...q, months: 6 }), [state, category])
   const { data: warehouse } = useApi(() => api.warehouse(), [])
 
   const trendSeries = useMemo(() => {
@@ -74,11 +77,21 @@ export default function PolicymakerPage() {
             </Explain>
           </div>
         </div>
-        <select value={category} onChange={(e) => { setCategory(e.target.value); setOpenRec(null) }}
-          className="rounded-lg border bg-white px-3 py-2 text-sm" style={{ borderColor: COLOR.grid }}>
-          <option value="">All sectors</option>
-          {(cats || []).map((c) => <option key={c.code} value={c.code}>{c.name}</option>)}
-        </select>
+        <div className="flex flex-wrap gap-2">
+          <select value={state} onChange={(e) => { setState(e.target.value); setDistrict(null); setOpenRec(null) }}
+            className="rounded-lg border bg-white px-3 py-2 text-sm" style={{ borderColor: COLOR.grid }}>
+            {(states || []).map((st) => (
+              <option key={st.id} value={st.is_default ? '' : st.name}>
+                {st.name}{st.is_default ? ' — pilot live' : ''}
+              </option>
+            ))}
+          </select>
+          <select value={category} onChange={(e) => { setCategory(e.target.value); setOpenRec(null) }}
+            className="rounded-lg border bg-white px-3 py-2 text-sm" style={{ borderColor: COLOR.grid }}>
+            <option value="">All sectors</option>
+            {(cats || []).map((c) => <option key={c.code} value={c.code}>{c.name}</option>)}
+          </select>
+        </div>
       </header>
 
       <div className="flex flex-wrap items-center gap-2 rounded-xl border bg-white px-4 py-2.5 text-xs shadow-sm"
@@ -87,12 +100,24 @@ export default function PolicymakerPage() {
         <span><b style={{ color: COLOR.ink }}>{num(summary.national?.districts ?? 0)}</b> districts across{' '}
           <b style={{ color: COLOR.ink }}>{summary.national?.states ?? 0}</b> states &amp; UTs loaded from Census 2011</span>
         <span style={{ color: COLOR.grid }}>|</span>
-        <span>pilot live in <b style={{ color: COLOR.ink }}>{summary.state}</b></span>
+        <span>viewing <b style={{ color: COLOR.ink }}>{summary.state}</b> · pilot live in <b style={{ color: COLOR.ink }}>Gujarat</b></span>
         <span style={{ color: COLOR.grid }}>|</span>
         {warehouse?.enabled
           ? <StatusChip tone="good" title={warehouse.purpose}>BigQuery national layer live</StatusChip>
           : <StatusChip tone="neutral" title={warehouse?.purpose}>BigQuery layer not configured — running on Postgres</StatusChip>}
       </div>
+
+      {summary.total_requests === 0 && (
+        <div className="flex items-start gap-2.5 rounded-xl p-4" style={{ background: `${COLOR.seq[3]}0f`, border: `1px solid ${COLOR.seq[3]}40` }}>
+          <PublicIcon sx={{ fontSize: 20, color: COLOR.seq[3], flexShrink: 0, mt: '2px' }} />
+          <div className="text-sm" style={{ color: COLOR.ink2 }}>
+            <b style={{ color: COLOR.ink }}>{summary.state} is loaded but the pilot has not started here.</b>{' '}
+            All {summary.state_districts} districts carry real Census 2011 population and infrastructure data, and the map
+            below is drawn from official boundaries — so the platform is ready the day citizen reporting opens.
+            Demand, hotspots and recommendations appear once people start reporting.
+          </div>
+        </div>
+      )}
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <Stat icon={GroupsIcon} label="Citizens reporting" value={num(summary.unique_citizens)} sub={`${num(summary.total_requests)} messages, repeats counted once`} />

@@ -5,7 +5,9 @@ const BASE = import.meta.env.VITE_API_URL || '/api'
  *  in its claims and this header is ignored. */
 export function getRole() {
   const seg = window.location.pathname.split('/')[1]
-  return ['citizen', 'analyst', 'policymaker'].includes(seg) ? seg : 'citizen'
+  if (['citizen', 'analyst', 'policymaker'].includes(seg)) return seg
+  // the AI transparency page reads analyst-level metrics; the landing page uses a public endpoint
+  return seg === 'ai' ? 'analyst' : 'citizen'
 }
 
 async function request(path, { method = 'GET', body, form } = {}) {
@@ -56,6 +58,12 @@ export const api = {
   recommendation: (id) => request(`/recommendations/${id}`),
   decide: (id, body) => request(`/recommendations/${id}/decision`, { method: 'POST', body }),
   impact: (id) => request(`/recommendations/${id}/impact`),
+
+  // public
+  publicSummary: () => request('/config/coverage'),
+
+  // AI transparency
+  aiPerformance: () => request('/ai/performance'),
 
   // data provenance & national warehouse
   datasets: () => request('/datasets'),

@@ -1,6 +1,6 @@
 /** Analyst interface — the human check on the AI.
  *  The citizen's original words sit beside every AI-derived field, and every edit is written to an audit trail. */
-import { useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import FactCheckIcon from '@mui/icons-material/FactCheck'
 import FilterAltIcon from '@mui/icons-material/FilterAlt'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
@@ -10,8 +10,10 @@ import RefreshIcon from '@mui/icons-material/Refresh'
 import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver'
 import SmartToyIcon from '@mui/icons-material/SmartToy'
 import InboxIcon from '@mui/icons-material/Inbox'
+import CloseIcon from '@mui/icons-material/Close'
 import { api } from '../../services/api'
 import { useApi } from '../../hooks/useApi'
+import { useInfiniteScroll, usePagedList } from '../../hooks/usePagedList'
 import { Panel, StatusChip, Chip, ErrorBox, Spinner, Empty, Explain } from '../../components/ui'
 import { num } from '../../format'
 import { COLOR } from '../../theme'
@@ -25,7 +27,15 @@ export default function AnalystPage() {
   const { data: cats } = useApi(() => api.configCategories(), [])
   const { data: states } = useApi(() => api.states(), [])
   const districts = states?.find((s) => s.is_default)?.districts || []
-  const { data, error, loading, reload } = useApi(() => api.listRequests({ ...filters, page_size: 50 }), [JSON.stringify(filters)])
+  const scrollBox = useRef(null)
+  // `filters` is a fresh object each render, so the serialised form is what should drive the fetch.
+  // Parsing it back inside the callback keeps the dependency list honest and statically checkable.
+  const filterKey = JSON.stringify(filters)
+  const fetchPage = useCallback((p) => api.listRequests({ ...JSON.parse(filterKey), ...p }), [filterKey])
+  const { items, total, hasMore, loading, loadingMore, error, loadMore, reload } =
+    usePagedList(fetchPage, [fetchPage], 50)
+  // the sentinel lives inside the scrolling table, so the observer watches that box, not the page
+  const sentinel = useInfiniteScroll(loadMore, { enabled: hasMore && !loading, rootRef: scrollBox })
 
   const set = (k) => (e) => setFilters((f) => ({ ...f, [k]: e.target.value }))
   const select = 'rounded-lg border px-3 py-2 text-sm outline-none'
@@ -45,7 +55,7 @@ export default function AnalystPage() {
         </div>
       </header>
 
-      <Panel icon={FilterAltIcon} title="Filters" actions={data && <Chip>{num(data.total)} matching</Chip>}>
+      <Panel icon={FilterAltIcon} title="Filters" actions={<Chip>{num(total)} matching</Chip>}>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <select value={filters.status} onChange={set('status')} className={select} style={{ borderColor: COLOR.grid }}>
             <option value="">All statuses</option>
@@ -65,56 +75,68 @@ export default function AnalystPage() {
 
       <ErrorBox error={error} />
 
-      <div className="grid gap-4 xl:grid-cols-[1.25fr_1fr]">
-        <Panel title="Requests" explain="Confidence is Gemini's own estimate that the category, location and urgency are right.">
-          {loading ? <Spinner /> : !data?.items?.length ? <Empty icon={InboxIcon}>No requests match these filters.</Empty> : (
-            <div className="-m-4 max-h-[68vh] overflow-auto">
+      <div className={`grid gap-4 ${selected ? 'xl:grid-cols-[1.35fr_1fr]' : 'grid-cols-1'}`}>
+        <Panel title="Requests" explain="Confidence is Gemini's own estimate that the category, location and urgency are right. Click any row to review it beside the citizen's original words.">
+          {loading ? <Spinner /> : !items.length ? <Empty icon={InboxIcon}>No requests match these filters.</Empty> : (
+            <div ref={scrollBox} className="-m-4 max-h-[68vh] overflow-auto">
               <table className="w-full text-left text-sm">
                 <thead className="sticky top-0 bg-white text-xs uppercase" style={{ color: COLOR.muted, boxShadow: `inset 0 -1px 0 ${COLOR.grid}` }}>
                   <tr>
                     <th className="px-4 py-2 font-medium">Citizen message</th>
-                    <th className="py-2 pr-2 font-medium">Category</th>
-                    <th className="py-2 pr-2 font-medium">District</th>
-                    <th className="py-2 pr-2 text-right font-medium">Urgency</th>
-                    <th className="py-2 pr-2 text-right font-medium">Confidence</th>
-                    <th className="py-2 pr-4 font-medium">Status</th>
+                    <th className="w-32 py-2 pr-3 font-medium">Category</th>
+                    <th className="w-28 py-2 pr-3 font-medium">District</th>
+                    <th className="w-16 py-2 pr-3 text-right font-medium">Urg.</th>
+                    <th className="w-20 py-2 pr-3 text-right font-medium">Conf.</th>
+                    <th className="w-28 py-2 pr-4 font-medium">Status</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {data.items.map((r) => (
+                  {items.map((r) => (
                     <tr key={r.id} onClick={() => setSelected(r)}
                       className="cursor-pointer border-t transition hover:bg-slate-50"
                       style={{ borderColor: COLOR.grid, background: selected?.id === r.id ? `${COLOR.seq[3]}0f` : undefined }}>
-                      <td className="max-w-[300px] truncate px-4 py-2">
+                      <td className="max-w-0 truncate px-4 py-2">
                         <span style={{ color: COLOR.ink }}>{r.original_text || r.transcript || '(voice message)'}</span>
                         <span className="ml-1.5 text-xs" style={{ color: COLOR.muted }}>{r.detected_language}</span>
                       </td>
-                      <td className="py-2 pr-2" style={{ color: COLOR.ink2 }}>{r.category_code || '—'}</td>
-                      <td className="py-2 pr-2" style={{ color: COLOR.ink2 }}>{r.resolved_geo?.name || '—'}</td>
-                      <td className="tnum py-2 pr-2 text-right" style={{ color: COLOR.ink2 }}>{r.urgency_score ?? '—'}</td>
-                      <td className="tnum py-2 pr-2 text-right" style={{ color: r.ai_confidence < 0.6 ? COLOR.critical : COLOR.ink2 }}>
+                      <td className="py-2 pr-3" style={{ color: COLOR.ink2 }}>{r.category_code || '—'}</td>
+                      <td className="py-2 pr-3" style={{ color: COLOR.ink2 }}>{r.resolved_geo?.name || '—'}</td>
+                      <td className="tnum py-2 pr-3 text-right" style={{ color: COLOR.ink2 }}>{r.urgency_score ?? '—'}</td>
+                      <td className="tnum py-2 pr-3 text-right" style={{ color: r.ai_confidence < 0.6 ? COLOR.critical : COLOR.ink2 }}>
                         {r.ai_confidence?.toFixed(2) ?? '—'}
                       </td>
                       <td className="py-2 pr-4">
-                        <StatusChip tone={STATUS_TONE[r.processing_status]}>{r.processing_status.replace(/_/g, ' ').toLowerCase()}</StatusChip>
+                        <StatusChip tone={STATUS_TONE[r.processing_status]}>
+                          {r.processing_status === 'REVIEW_REQUIRED' ? 'review' : r.processing_status.replace(/_/g, ' ').toLowerCase()}
+                        </StatusChip>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+
+              {/* scrolling to here pulls the next page */}
+              <div ref={sentinel} className="px-4 py-3 text-center text-xs" style={{ color: COLOR.muted }}>
+                {loadingMore
+                  ? 'Loading more…'
+                  : hasMore
+                    ? <button onClick={loadMore} className="underline">Showing {num(items.length)} of {num(total)} — load more</button>
+                    : `All ${num(total)} loaded`}
+              </div>
             </div>
           )}
         </Panel>
 
-        {selected
-          ? <Detail key={selected.id} request={selected} categories={cats || []} districts={districts} onDone={(r) => { setSelected(r); reload() }} />
-          : <Panel title="Review detail"><Empty icon={FactCheckIcon}>Select a request to see the AI output beside the citizen's original words.</Empty></Panel>}
+        {selected && (
+          <Detail key={selected.id} request={selected} categories={cats || []} districts={districts}
+            onClose={() => setSelected(null)} onDone={(r) => { setSelected(r); reload() }} />
+        )}
       </div>
     </div>
   )
 }
 
-function Detail({ request: r, categories, districts, onDone }) {
+function Detail({ request: r, categories, districts, onDone, onClose }) {
   const [form, setForm] = useState({})
   const [reason, setReason] = useState('')
   const [busy, setBusy] = useState(false)
@@ -139,7 +161,12 @@ function Detail({ request: r, categories, districts, onDone }) {
 
   return (
     <Panel title={`Request #${r.id} · ${r.tracking_code}`}
-      actions={<StatusChip tone={STATUS_TONE[r.processing_status]}>{r.processing_status.replace(/_/g, ' ').toLowerCase()}</StatusChip>}>
+      actions={<>
+        <StatusChip tone={STATUS_TONE[r.processing_status]}>{r.processing_status.replace(/_/g, ' ').toLowerCase()}</StatusChip>
+        <button onClick={onClose} title="Close" className="rounded-lg p-1 transition hover:bg-slate-100" style={{ color: COLOR.muted }}>
+          <CloseIcon sx={{ fontSize: 17 }} />
+        </button>
+      </>}>
       <div className="space-y-4">
         <div className="rounded-lg p-3" style={{ background: COLOR.page }}>
           <div className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide" style={{ color: COLOR.muted }}>
