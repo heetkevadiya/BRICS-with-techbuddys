@@ -28,8 +28,43 @@ TABLES = {
 }
 
 
-def enabled() -> bool:
+def configured() -> bool:
+    """Credentials and a project are present. Says nothing about whether they work."""
     return bool(settings.google_cloud_project and settings.credentials_path)
+
+
+def status() -> dict:
+    """Actually reach BigQuery and report what it can do.
+
+    `configured()` only proves a key file exists. A dashboard that reports "live" on that basis will
+    claim a capability the service account may not have — which is exactly what happened when the
+    account had Data Editor but not the permission to create a dataset.
+    """
+    if not configured():
+        return {"live": False, "reason": "No GOOGLE_CLOUD_PROJECT or service-account key configured.",
+                "dataset": None, "tables": {}}
+    try:
+        from google.api_core.exceptions import Forbidden, NotFound
+
+        client = _client()
+        try:
+            client.get_dataset(dataset_ref())
+        except NotFound:
+            return {"live": False, "dataset": dataset_ref(), "tables": {},
+                    "reason": "Authenticated, but the dataset does not exist yet. Run scripts.sync_bigquery."}
+        except Forbidden as e:
+            return {"live": False, "dataset": dataset_ref(), "tables": {},
+                    "reason": f"Authenticated, but this service account lacks BigQuery permission: {e.message}"}
+        present = {t.table_id: client.get_table(t.reference).num_rows
+                   for t in client.list_tables(dataset_ref())}
+        return {"live": True, "dataset": dataset_ref(), "tables": present, "reason": None}
+    except Exception as e:  # network, bad key, API not enabled
+        return {"live": False, "dataset": dataset_ref(), "tables": {}, "reason": f"{type(e).__name__}: {e}"}
+
+
+def enabled() -> bool:
+    """Kept for callers that only need to know whether an upload is worth attempting."""
+    return configured()
 
 
 @lru_cache(maxsize=1)

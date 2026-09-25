@@ -47,10 +47,18 @@ async def import_dataset(kind: str = Form(..., description="infrastructure | pro
 
 @router.get("/warehouse")
 def warehouse_status(user: User = Depends(require_role("analyst", "policymaker"))):
-    """Whether the BigQuery national layer is live, and what it holds."""
+    """Whether the BigQuery national layer is actually reachable, and what it holds.
+
+    This calls BigQuery rather than inspecting configuration, so the dashboard can never claim a
+    capability that would fail the moment someone used it.
+    """
+    st = bq.status()
     return {
-        "enabled": bq.enabled(),
-        "dataset": bq.dataset_ref() if bq.enabled() else None,
+        "enabled": st["live"],
+        "configured": bq.configured(),
+        "dataset": st["dataset"],
+        "reason": st["reason"],
+        "row_counts": st["tables"],
         "tables": bq.TABLES,
         "purpose": "Postgres serves the operational loop; BigQuery holds the national analytical "
                    "tables that a ministry would query across every state at once.",
