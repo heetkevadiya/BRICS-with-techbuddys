@@ -8,7 +8,7 @@ from sqlalchemy import func
 from app.analytics.aggregation import VALID_STATUSES
 from app.core.config import settings
 from app.db.session import get_db
-from app.models import Category, CitizenRequest, Demographics, GeographicEntity, GeoLevel
+from app.models import Category, CitizenRequest, Demographics, GeographicEntity, GeoLevel, ProcessingStatus
 from app.services.priority_service import weights
 
 router = APIRouter(prefix="/config", tags=["config"])
@@ -28,6 +28,35 @@ def states(db: Session = Depends(get_db)):
         districts = db.query(GeographicEntity).filter_by(parent_id=s.id, level=GeoLevel.DISTRICT).order_by(GeographicEntity.name).all()
         out.append({"id": s.id, "name": s.name, "code": s.code, "is_default": s.name == settings.default_state,
                     "districts": [{"id": d.id, "name": d.name, "code": d.code, "lat": d.centroid_lat, "lng": d.centroid_lng} for d in districts]})
+    return out
+
+
+@router.get("/showcase")
+def showcase(db: Session = Depends(get_db)):
+    """One real processed request per language, with what Gemini extracted from it."""
+    out = []
+    for lang in ("gu", "hi", "hi-Latn", "en"):
+        r = (db.query(CitizenRequest)
+             .filter(CitizenRequest.declared_language == lang,
+                     CitizenRequest.processing_status == ProcessingStatus.PROCESSED,
+                     CitizenRequest.translated_text.isnot(None),
+                     CitizenRequest.category_code.isnot(None),
+                     CitizenRequest.resolved_geo_id.isnot(None))
+             .order_by(CitizenRequest.ai_confidence.desc(), CitizenRequest.id)
+             .first())
+        if r is None:
+            continue
+        out.append({
+            "language": lang,
+            "channel": r.channel.value,
+            "original_text": r.original_text,
+            "translated_text": r.translated_text,
+            "category": r.category.name if r.category else None,
+            "sub_category": r.sub_category,
+            "district": r.resolved_geo.name if r.resolved_geo else None,
+            "urgency": r.urgency_score,
+            "confidence": round(r.ai_confidence, 2) if r.ai_confidence is not None else None,
+        })
     return out
 
 
