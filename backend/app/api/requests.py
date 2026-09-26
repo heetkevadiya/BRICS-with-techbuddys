@@ -33,7 +33,10 @@ def _ack(lang: str | None, code: str) -> str:
 def _district(db: Session, name: str | None) -> GeographicEntity | None:
     if not name:
         return None
-    return db.query(GeographicEntity).filter_by(level=GeoLevel.DISTRICT, name=name).first()
+    q = db.query(GeographicEntity).filter_by(level=GeoLevel.DISTRICT)
+    if name.isdigit():
+        return q.filter_by(id=int(name)).first()
+    return q.filter_by(name=name).first()
 
 
 def _run_pipeline(request_id: int) -> None:
