@@ -78,11 +78,11 @@ def sync(db: Session, state_id: int) -> dict:
     profile = build_district_profile(db)
     snapshot = build_demand_snapshot(db, state_id)
     result = {
-        "bigquery_enabled": bq.enabled(),
+        "bigquery_configured": bq.configured(),
         "district_profile_rows": len(profile),
         "demand_snapshot_rows": len(snapshot),
     }
-    if not bq.enabled():
+    if not bq.configured():
         result["note"] = ("BigQuery is not configured, so the frames were built but not uploaded. "
                           "Set GOOGLE_CLOUD_PROJECT and GOOGLE_APPLICATION_CREDENTIALS to enable it.")
         return result

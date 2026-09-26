@@ -48,8 +48,14 @@ def test_demand_snapshot_shape(db):
     assert (df["index_source"].isin(["census_2011", "modelled"])).all()
 
 
-def test_bigquery_degrades_without_credentials():
-    """The demo must never break because a cloud service is unconfigured."""
-    if bq.enabled():
-        pytest.skip("BigQuery is configured; nothing to assert about the fallback")
-    assert bq.enabled() is False
+def test_bigquery_status_never_raises_and_explains_itself():
+    """The demo must never break because a cloud service is unconfigured or unauthorised.
+
+    This is the regression guard for a real bug: the dashboard reported BigQuery as live because
+    credentials existed, while every query against it failed. Liveness must be answered by calling
+    BigQuery, and a dead layer must carry a reason the UI can show instead of a bare False.
+    """
+    st = bq.status()
+    assert {"live", "dataset", "tables", "reason"} <= set(st)
+    assert isinstance(st["live"], bool)
+    assert st["reason"] if not st["live"] else st["reason"] is None

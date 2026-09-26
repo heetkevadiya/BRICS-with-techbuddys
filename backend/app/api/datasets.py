@@ -75,6 +75,7 @@ def warehouse_sync(db: Session = Depends(get_db), state: GeographicEntity = Depe
 @router.get("/warehouse/national")
 def warehouse_national(user: User = Depends(require_role("policymaker", "analyst"))):
     """Top priorities per state, computed in BigQuery across all 36 states in one query."""
-    if not bq.enabled():
-        raise HTTPException(503, "BigQuery is not configured; the national view runs on the warehouse layer")
+    st = bq.status()
+    if not st["live"]:
+        raise HTTPException(503, st["reason"])
     return bq.national_summary().to_dict(orient="records")

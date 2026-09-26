@@ -88,7 +88,7 @@ def performance(db: Session = Depends(get_db), user: User = Depends(require_role
             "gemini": bool(settings.gemini_api_key),
             "cloud_speech_to_text": speech_service.cloud_stt_available(),
             "cloud_translation": settings.credentials_path is not None,
-            "bigquery": bq.enabled(),
+            "bigquery": bq.status()["live"],
         },
         "evaluation": json.loads(REPORT.read_text()) if REPORT.exists() else None,
         "operational": {

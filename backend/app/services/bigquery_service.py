@@ -8,12 +8,14 @@ infrastructure indices and budget lines, plus a daily snapshot of aggregated cit
 what a national rollout queries across all 36 states at once, and what a ministry's own analysts
 would join against their existing warehouse tables.
 
-Everything degrades safely: with no credentials configured the platform runs entirely on Postgres
-and `enabled()` returns False, so the dashboards never break during a demo.
+Everything degrades safely: `status()` reports what BigQuery can actually do right now — not what
+the config file claims — so a dashboard can never advertise a layer that would fail on use, and the
+platform runs entirely on Postgres when the warehouse is unreachable.
 """
 from __future__ import annotations
 
 import logging
+import time
 from functools import lru_cache
 
 import pandas as pd
@@ -33,6 +35,12 @@ def configured() -> bool:
     return bool(settings.google_cloud_project and settings.credentials_path)
 
 
+# A live round-trip costs ~1s, and two dashboard pages ask on every load. The answer changes only
+# when someone runs a sync or edits IAM, so a short TTL is plenty and keeps the page responsive.
+_STATUS_TTL_SECONDS = 30.0
+_status_cache: tuple[float, dict] | None = None
+
+
 def status() -> dict:
     """Actually reach BigQuery and report what it can do.
 
@@ -40,6 +48,16 @@ def status() -> dict:
     claim a capability the service account may not have — which is exactly what happened when the
     account had Data Editor but not the permission to create a dataset.
     """
+    global _status_cache
+    if _status_cache and time.monotonic() - _status_cache[0] < _STATUS_TTL_SECONDS:
+        return _status_cache[1]
+
+    result = _probe()
+    _status_cache = (time.monotonic(), result)
+    return result
+
+
+def _probe() -> dict:
     if not configured():
         return {"live": False, "reason": "No GOOGLE_CLOUD_PROJECT or service-account key configured.",
                 "dataset": None, "tables": {}}
@@ -60,11 +78,6 @@ def status() -> dict:
         return {"live": True, "dataset": dataset_ref(), "tables": present, "reason": None}
     except Exception as e:  # network, bad key, API not enabled
         return {"live": False, "dataset": dataset_ref(), "tables": {}, "reason": f"{type(e).__name__}: {e}"}
-
-
-def enabled() -> bool:
-    """Kept for callers that only need to know whether an upload is worth attempting."""
-    return configured()
 
 
 @lru_cache(maxsize=1)
