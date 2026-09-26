@@ -37,7 +37,7 @@ const UI = {
 }
 
 export default function CitizenPage() {
-  const [lang, setLang] = useState('gu')
+  const [lang, setLang] = useState('en')
   const [district, setDistrict] = useState('')
   const [text, setText] = useState('')
   const [phone, setPhone] = useState('')
@@ -50,7 +50,7 @@ export default function CitizenPage() {
   const { data: langs } = useApi(() => api.languages(), [])
   const { data: states } = useApi(() => api.states(), [])
   const t = UI[lang] || UI.en
-  const districts = states?.find((s) => s.is_default)?.districts || []
+  const stateGroups = [...(states || [])].sort((a, b) => Number(b.is_default) - Number(a.is_default))
   const langOptions = langs ? [...langs.tier1, ...langs.tier2] : ['gu', 'hi', 'en']
 
   async function submitText(e) {
@@ -114,7 +114,11 @@ export default function CitizenPage() {
               </span>
               <select value={district} onChange={(e) => setDistrict(e.target.value)} className={field} style={fieldStyle}>
                 <option value="">{t.pick}</option>
-                {districts.map((d) => <option key={d.id} value={d.name}>{d.name}</option>)}
+                {stateGroups.map((s) => (
+                  <optgroup key={s.id} label={s.name}>
+                    {s.districts.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+                  </optgroup>
+                ))}
               </select>
             </label>
           </div>
