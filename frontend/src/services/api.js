@@ -15,7 +15,11 @@ async function request(path, { method = 'GET', body, form } = {}) {
   if (!form) headers['Content-Type'] = 'application/json'
 
   const res = await fetch(`${BASE}${path}`, { method, headers, body: form || (body ? JSON.stringify(body) : undefined) })
-  if (!res.ok) throw new Error(await readError(res))
+  if (!res.ok) {
+    const err = new Error(await readError(res))
+    err.status = res.status
+    throw err
+  }
   return res.status === 204 ? null : res.json()
 }
 
@@ -61,6 +65,7 @@ export const api = {
 
   // public
   publicSummary: () => request('/config/coverage'),
+  showcase: () => request('/config/showcase'),
 
   // AI transparency
   aiPerformance: () => request('/ai/performance'),

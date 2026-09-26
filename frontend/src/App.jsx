@@ -15,7 +15,6 @@ import PolicymakerPage from './pages/policymaker/PolicymakerPage'
 import { COLOR } from './theme'
 
 const TABS = [
-  { to: '/home', label: 'Overview', icon: HomeIcon, blurb: 'what this is' },
   { to: '/citizen', label: 'Citizen', icon: CampaignIcon, blurb: 'report a problem' },
   { to: '/analyst', label: 'Analyst', icon: FactCheckIcon, blurb: 'check the AI' },
   { to: '/policymaker', label: 'Policymaker', icon: InsightsIcon, blurb: 'decide what to fund' },
@@ -27,9 +26,13 @@ function Nav() {
   return (
     <nav className="sticky top-0 z-20 border-b bg-white/95 backdrop-blur" style={{ borderColor: COLOR.grid }}>
       <div className="mx-auto flex max-w-[1500px] flex-wrap items-center gap-x-6 gap-y-2 px-4 py-2.5">
-        <span className="text-sm font-semibold" style={{ color: COLOR.ink }}>
+        <Link to="/home" className="group flex items-center gap-2 text-sm font-semibold transition hover:opacity-70"
+          style={{ color: COLOR.ink }}>
+          <span className="flex h-6 w-6 items-center justify-center rounded-md" style={{ background: COLOR.seq[4] }}>
+            <HomeIcon sx={{ fontSize: 15, color: '#ffffff' }} />
+          </span>
           Citizen Demand <span style={{ color: COLOR.muted }}>→</span> Development Priorities
-        </span>
+        </Link>
         {/* the tab row scrolls rather than overflowing the page on a phone */}
         <div className="-mx-4 flex max-w-full gap-1 overflow-x-auto px-4 sm:mx-0 sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {TABS.map(({ to, label, icon: Icon, blurb }) => {
@@ -65,8 +68,17 @@ export default function App() {
           <Route path="/policymaker" element={<PolicymakerPage />} />
           <Route path="*" element={<Navigate to="/home" replace />} />
         </Routes>
-        <footer className="mx-auto max-w-[1500px] px-4 py-6 text-center text-xs" style={{ color: COLOR.muted }}>
-          AI understands the messages · deterministic code calculates every score · people make the decisions
+        <footer className="mt-4 border-t bg-white" style={{ borderColor: COLOR.grid }}>
+          <div className="mx-auto flex max-w-[1500px] flex-wrap items-center justify-between gap-3 px-4 py-6 text-xs"
+            style={{ color: COLOR.muted }}>
+            <span>AI understands the messages · deterministic code calculates every score · people make the decisions</span>
+            <span className="flex flex-wrap items-center gap-4">
+              <Link to="/home" className="hover:underline">Overview</Link>
+              <Link to="/ai" className="hover:underline">AI accuracy</Link>
+              <a href={`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/docs`} target="_blank" rel="noreferrer" className="hover:underline">API docs</a>
+              <span>Build with AI: Code for Communities 2026</span>
+            </span>
+          </div>
         </footer>
       </div>
     </BrowserRouter>

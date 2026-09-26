@@ -21,19 +21,22 @@ const UI = {
     ph: 'e.g. The road to our village is broken and ambulances cannot reach us during the rains.',
     phone: 'Phone number', phoneHint: 'Optional. Stored only as a one-way hash so repeat reports are not counted twice. Officials never see it.',
     submit: 'Submit', rec: 'Record instead', stop: 'Stop and send', sending: 'Sending…',
-    track: 'Check a request you already sent', code: 'Tracking code', check: 'Check', received: 'Received' },
+    track: 'Check a request you already sent', code: 'Tracking code', check: 'Check', received: 'Received',
+    notFound: 'No request found with that code. Check it and try again.', failed: 'Your report could not be sent. Please try again.' },
   gu: { title: 'તમારા વિસ્તારની સમસ્યા જણાવો', sub: 'તમારી ભાષામાં બોલો અથવા લખો. દરેક રજૂઆત સરકારી વિશ્લેષક વાંચે છે.',
     lang: 'ભાષા', district: 'જિલ્લો', pick: 'તમારો જિલ્લો પસંદ કરો', text: 'સમસ્યા શું છે?',
     ph: 'દા.ત. અમારા ગામનો રસ્તો તૂટી ગયો છે અને વરસાદમાં એમ્બ્યુલન્સ આવી શકતી નથી.',
     phone: 'ફોન નંબર', phoneHint: 'વૈકલ્પિક. માત્ર હેશ તરીકે સાચવાય છે જેથી એક જ રજૂઆત બે વાર ન ગણાય. અધિકારીઓ તેને જોઈ શકતા નથી.',
     submit: 'મોકલો', rec: 'અવાજમાં જણાવો', stop: 'બંધ કરી મોકલો', sending: 'મોકલાઈ રહ્યું છે…',
-    track: 'અગાઉ મોકલેલી વિનંતી તપાસો', code: 'ટ્રેકિંગ કોડ', check: 'તપાસો', received: 'મળી ગયું' },
+    track: 'અગાઉ મોકલેલી વિનંતી તપાસો', code: 'ટ્રેકિંગ કોડ', check: 'તપાસો', received: 'મળી ગયું',
+    notFound: 'આ કોડથી કોઈ વિનંતી મળી નથી. કોડ તપાસીને ફરી પ્રયત્ન કરો.', failed: 'તમારી રજૂઆત મોકલી શકાઈ નથી. ફરી પ્રયત્ન કરો.' },
   hi: { title: 'अपने क्षेत्र की समस्या बताइए', sub: 'अपनी भाषा में बोलिए या लिखिए। हर शिकायत सरकारी विश्लेषक पढ़ता है।',
     lang: 'भाषा', district: 'ज़िला', pick: 'अपना ज़िला चुनें', text: 'समस्या क्या है?',
     ph: 'जैसे: हमारे गाँव की सड़क टूटी है और बारिश में एम्बुलेंस नहीं आ पाती।',
     phone: 'फ़ोन नंबर', phoneHint: 'वैकल्पिक। केवल हैश के रूप में रखा जाता है ताकि एक ही शिकायत दो बार न गिने। अधिकारी इसे नहीं देखते।',
     submit: 'भेजें', rec: 'बोलकर बताइए', stop: 'रोककर भेजें', sending: 'भेजा जा रहा है…',
-    track: 'पहले भेजा अनुरोध देखें', code: 'ट्रैकिंग कोड', check: 'देखें', received: 'प्राप्त हुआ' },
+    track: 'पहले भेजा अनुरोध देखें', code: 'ट्रैकिंग कोड', check: 'देखें', received: 'प्राप्त हुआ',
+    notFound: 'इस कोड से कोई अनुरोध नहीं मिला। कोड जाँचकर फिर कोशिश करें।', failed: 'आपकी शिकायत भेजी नहीं जा सकी। कृपया फिर कोशिश करें।' },
 }
 
 export default function CitizenPage() {
@@ -59,7 +62,7 @@ export default function CitizenPage() {
     try {
       setAck(await api.submit({ text, language: lang, district: district || null, citizen_ref: phone || null, channel: 'WEB' }))
       setText('')
-    } catch (err) { setError(err) } finally { setBusy(false) }
+    } catch { setError(new Error(t.failed)) } finally { setBusy(false) }
   }
 
   async function toggleRecording() {
@@ -80,7 +83,7 @@ export default function CitizenPage() {
           if (district) form.append('district', district)
           if (phone) form.append('citizen_ref', phone)
           setAck(await api.submitVoice(form))
-        } catch (err) { setError(err) } finally { setBusy(false) }
+        } catch { setError(new Error(t.failed)) } finally { setBusy(false) }
       }
       recorder.current = mr
       mr.start(); setRecording(true)
@@ -183,7 +186,7 @@ function TrackBox({ t, field, fieldStyle }) {
           {t.check}
         </button>
       </div>
-      <div className="mt-3 space-y-3"><ErrorBox error={error} /></div>
+      <div className="mt-3 space-y-3"><ErrorBox error={error && { message: error.status === 404 ? t.notFound : error.message }} /></div>
       {result && (
         <div className="mt-3 rounded-lg p-3 text-sm" style={{ background: COLOR.page }}>
           <div className="text-xs" style={{ color: COLOR.muted }}>
