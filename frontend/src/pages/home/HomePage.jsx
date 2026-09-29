@@ -36,7 +36,7 @@ const STACK = [
   ['Cloud Translation', 'serves 14 Indian languages'],
   ['BigQuery', 'holds the national tables'],
   ['Google Maps Platform', 'draws the district map'],
-  ['Firebase Auth', 'separates the three roles'],
+  ['Firebase Auth', 'verifies ID tokens on guarded routes'],
   ['Cloud Run', 'runs the API'],
 ]
 
@@ -93,7 +93,7 @@ export default function HomePage() {
         ) : <Spinner label="Loading coverage…" />}
 
         <Panel icon={CloudQueueIcon} title="Built on Google Cloud"
-          explain="Each service does one job the platform genuinely needs. The AI accuracy page shows what each one is allowed to do, and what it is not.">
+          explain="Each service does one job the platform genuinely needs. The AI accuracy page shows what each one is allowed to do, and what it is not. Firebase ID-token verification sits on every guarded route; this public preview opens the citizen, analyst and policymaker screens directly so the whole loop can be followed without an account.">
           <div className="grid gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-4">
             {STACK.map(([name, role]) => (
               <div key={name} className="flex items-start gap-2">

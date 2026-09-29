@@ -2,6 +2,7 @@
  *  In production a Firebase ID token carries the role instead and this switcher disappears. */
 import { BrowserRouter, Link, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import HomeIcon from '@mui/icons-material/Home'
+import PersonIcon from '@mui/icons-material/Person'
 import CampaignIcon from '@mui/icons-material/Campaign'
 import PsychologyIcon from '@mui/icons-material/Psychology'
 import FactCheckIcon from '@mui/icons-material/FactCheck'
@@ -46,11 +47,32 @@ function Nav() {
             )
           })}
         </div>
-        <span className="ml-auto hidden text-xs sm:inline" style={{ color: COLOR.muted }}>
-          viewing as <b style={{ color: COLOR.ink2 }}>{getRole()}</b>
-        </span>
+        <AccountChip />
       </div>
     </nav>
+  )
+}
+
+const ACCOUNT = {
+  citizen: { name: 'Citizen', org: 'Public access' },
+  analyst: { name: 'Data Analyst', org: 'Department of Planning' },
+  policymaker: { name: 'Policy Officer', org: 'Government of Gujarat' },
+}
+
+function AccountChip() {
+  const role = getRole()
+  const who = ACCOUNT[role] || ACCOUNT.citizen
+  return (
+    <div className="ml-auto hidden items-center gap-2 sm:flex">
+      <span className="flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold text-white"
+        style={{ background: COLOR.seq[4] }}>
+        <PersonIcon sx={{ fontSize: 16 }} />
+      </span>
+      <span className="leading-tight">
+        <span className="block text-xs font-semibold" style={{ color: COLOR.ink }}>{who.name}</span>
+        <span className="block text-[11px]" style={{ color: COLOR.muted }}>{who.org}</span>
+      </span>
+    </div>
   )
 }
 

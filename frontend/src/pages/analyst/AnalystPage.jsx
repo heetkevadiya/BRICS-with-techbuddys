@@ -73,7 +73,9 @@ export default function AnalystPage() {
             sub={`${num(perf.operational.review_required)} in this queue — the work below`} />
           <Stat icon={EditNoteIcon} label="Corrected by an analyst"
             value={perf.operational.correction_rate === null ? '—' : `${Math.round(perf.operational.correction_rate * 100)}%`}
-            sub="of the decisions made so far" />
+            sub={perf.operational.correction_rate === null
+              ? 'no analyst decisions recorded yet'
+              : 'of the decisions made so far'} />
         </div>
       )}
 
