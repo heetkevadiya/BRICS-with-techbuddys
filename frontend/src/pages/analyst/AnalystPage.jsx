@@ -26,7 +26,7 @@ const STATUS_TONE = { PROCESSED: 'good', REVIEW_REQUIRED: 'warning', FAILED: 'cr
 const STATUSES = ['RECEIVED', 'PROCESSING', 'PROCESSED', 'REVIEW_REQUIRED', 'FAILED', 'LANGUAGE_UNSUPPORTED']
 
 export default function AnalystPage() {
-  const [filters, setFilters] = useState({ status: 'REVIEW_REQUIRED', district: '', category: '', q: '' })
+  const [filters, setFilters] = useState({ status: '', district: '', category: '', q: '' })
   const [selected, setSelected] = useState(null)
   const { data: cats } = useApi(() => api.configCategories(), [])
   const { data: states } = useApi(() => api.states(), [])
@@ -49,13 +49,13 @@ export default function AnalystPage() {
     <div className="mx-auto max-w-[1500px] space-y-4 px-4 py-6">
       <header>
         <h1 className="flex items-center gap-2 text-xl font-bold" style={{ color: COLOR.ink }}>
-          <FactCheckIcon sx={{ fontSize: 22, color: COLOR.muted }} />Analyst review queue
+          <FactCheckIcon sx={{ fontSize: 22, color: COLOR.muted }} />Analyst workspace
         </h1>
         <div className="mt-1.5 max-w-3xl">
           <Explain>
             Gemini proposes a category, location and urgency for every message; it never decides. Most messages clear
-            its confidence bar and are accepted automatically — this screen is the minority that does not. Anything below
-            0.60 confidence, with an unresolved district, or in an unsupported language waits here for a human.
+            its confidence bar and are accepted automatically. Anything below 0.60 confidence, with an unresolved district,
+            or in an unsupported language waits for a human — filter to <b>review required</b> to work through those.
             Approving, correcting or rejecting writes the old value, the new value, your ID and your reason to the audit trail.
           </Explain>
         </div>
@@ -70,7 +70,7 @@ export default function AnalystPage() {
             sub={`${num(perf.operational.with_ai_output - perf.operational.review_required)} cleared the confidence bar`} />
           <Stat icon={PendingActionsIcon} label="Waiting for a human"
             value={`${Math.round(perf.operational.review_required / perf.operational.with_ai_output * 100)}%`}
-            sub={`${num(perf.operational.review_required)} in this queue — the work below`} />
+            sub={`${num(perf.operational.review_required)} waiting — filter to review required`} />
           <Stat icon={EditNoteIcon} label="Corrected by an analyst"
             value={perf.operational.correction_rate === null ? '—' : `${Math.round(perf.operational.correction_rate * 100)}%`}
             sub={perf.operational.correction_rate === null
