@@ -8,7 +8,7 @@ from geoalchemy2.functions import ST_AsGeoJSON, ST_SimplifyPreserveTopology
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from app.analytics.aggregation import VALID_STATUSES, cluster_list, trend_series
+from app.analytics.aggregation import VALID_STATUSES, cluster_list, trend_series, latest_report_at
 from app.analytics.hotspots import top_hotspots
 from app.api.deps import User, get_state, require_role
 from app.db.session import get_db
@@ -39,7 +39,7 @@ def summary(db: Session = Depends(get_db), state: GeographicEntity = Depends(get
     total = valid.count()
     uniq = valid.with_entities(func.count(func.distinct(func.coalesce(CitizenRequest.citizen_hash, func.cast(CitizenRequest.id, __import__("sqlalchemy").String))))).scalar() or 0
     pop = db.query(func.sum(Demographics.population)).join(GeographicEntity, GeographicEntity.id == Demographics.geo_id).filter(GeographicEntity.parent_id == state.id).scalar() or 1
-    now = datetime.now(timezone.utc)
+    now = latest_report_at(db)
     last30 = valid.filter(CitizenRequest.submitted_at >= now - timedelta(days=30)).count()
     prev30 = valid.filter(CitizenRequest.submitted_at >= now - timedelta(days=60), CitizenRequest.submitted_at < now - timedelta(days=30)).count()
     langs = dict(valid.with_entities(CitizenRequest.detected_language, func.count()).group_by(CitizenRequest.detected_language).all())

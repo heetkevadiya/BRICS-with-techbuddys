@@ -48,3 +48,20 @@ def test_no_demand_means_no_priority(frame):
     silent = frame[frame["unique_citizens"] == 0]
     if not silent.empty:
         assert (silent["priority_score"] == 0).all(), "priority without any citizen demand"
+
+
+def test_recency_windows_do_not_decay_with_the_wall_clock():
+    """The pilot corpus is a fixed extract. Anchoring "last 30 days" on now() made the dashboard
+    report a falling trend purely because days had passed since seeding — it read +17.9% one week
+    and -4.9% the next, with identical data. The anchor is the newest report instead."""
+    from app.analytics.aggregation import latest_report_at
+    from app.db.session import SessionLocal
+    from app.models import CitizenRequest
+
+    with SessionLocal() as db:
+        if not db.query(CitizenRequest).first():
+            import pytest
+            pytest.skip("demo database not seeded")
+        anchor = latest_report_at(db)
+        newest = max(r.submitted_at for r in db.query(CitizenRequest).limit(25_000))
+        assert anchor == newest

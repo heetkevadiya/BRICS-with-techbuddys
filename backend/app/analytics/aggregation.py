@@ -35,8 +35,19 @@ def _citizen_key():
     return func.coalesce(CitizenRequest.citizen_hash, cast(CitizenRequest.id, String))
 
 
+def latest_report_at(db: Session) -> datetime:
+    """The newest citizen report, or now if there are none.
+
+    Recency windows anchor here rather than on the wall clock. The pilot corpus is a fixed extract:
+    anchoring on now() makes "the last 30 days" drift into empty time, so the dashboard reports a
+    falling trend purely because days have passed since the data was loaded.
+    """
+    newest = db.query(func.max(CitizenRequest.submitted_at)).scalar()
+    return newest or datetime.now(timezone.utc)
+
+
 def demand_by_district_category(db: Session, state_id: int, now: datetime | None = None) -> pd.DataFrame:
-    now = now or datetime.now(timezone.utc)
+    now = now or latest_report_at(db)
     d30, d60 = now - timedelta(days=30), now - timedelta(days=60)
     base = (
         db.query(
@@ -139,7 +150,7 @@ def integrated_frame(db: Session, state_id: int, now: datetime | None = None) ->
 
 
 def trend_series(db: Session, state_id: int, *, geo_id: int | None = None, category_code: str | None = None, months: int = 6) -> list[dict]:
-    since = datetime.now(timezone.utc) - timedelta(days=30 * months)
+    since = latest_report_at(db) - timedelta(days=30 * months)
     month = func.date_trunc("month", CitizenRequest.submitted_at).label("month")
     q = (
         db.query(month, CitizenRequest.category_code, func.count(func.distinct(_citizen_key())).label("unique_citizens"),

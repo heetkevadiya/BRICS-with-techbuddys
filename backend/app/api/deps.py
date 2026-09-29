@@ -37,7 +37,7 @@ def current_user(authorization: str | None = Header(None), x_demo_role: str | No
             return _verify_firebase(authorization.split(" ", 1)[1])
         except Exception as e:
             raise HTTPException(status.HTTP_401_UNAUTHORIZED, f"invalid token: {e}")
-    if settings.app_env != "production" and x_demo_role in ROLES:
+    if settings.role_switching and x_demo_role in ROLES:
         return User(uid=x_demo_user or f"demo-{x_demo_role}", role=x_demo_role, name=x_demo_user)
     return User(uid="anonymous", role="citizen")
 

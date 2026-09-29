@@ -33,6 +33,7 @@ def assign_cluster(db: Session, req: CitizenRequest) -> RequestCluster | None:
         db.add(best)
         db.flush()
     req.cluster_id = best.id
+    db.flush()
     _link_duplicate(db, req, best)
     refresh_cluster_stats(db, best)
     return best

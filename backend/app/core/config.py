@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     bigquery_dataset: str = "citizen_demand"
     bigquery_location: str = "asia-south1"
     firebase_project_id: str = ""
+    role_switching: bool = True
 
     default_country: str = "IN"
     default_state: str = "Gujarat"
