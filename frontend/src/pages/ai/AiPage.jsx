@@ -89,7 +89,7 @@ export default function AiPage() {
         </Panel>
 
         <Panel icon={SpeedIcon} title="Confidence, and what happens next"
-          explain="The model reports its own confidence on every message. Below 0.60 the request is not used until a human has checked it — that band is the analyst's workload, not a hidden error rate.">
+          explain="Gemini reports its own confidence on every message it processes. Below 0.60 the request is held until a human has checked it — that band is the analyst's workload, not a hidden error rate.">
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={op.confidence_bands} margin={{ top: 8, right: 12, bottom: 4, left: 4 }}>
               <CartesianGrid stroke={COLOR.grid} strokeDasharray="3 3" vertical={false} />
@@ -110,6 +110,13 @@ export default function AiPage() {
             <div>Average confidence <b className="tnum" style={{ color: COLOR.ink }}>{op.avg_confidence}</b></div>
             <div>Repeat reports linked <b className="tnum" style={{ color: COLOR.ink }}>{num(op.duplicates_linked)}</b></div>
           </div>
+          {op.by_model && (
+            <p className="mt-2 text-xs" style={{ color: COLOR.muted }}>
+              Provenance: {Object.entries(op.by_model).map(([m, n]) => `${num(n)} ${m}`).join(' · ')}. The pilot corpus is
+              generated demo traffic whose confidence is seeded to this same routing rule. The accuracy table above is
+              measured by running live Gemini over labelled cases, not taken from these counts.
+            </p>
+          )}
         </Panel>
       </div>
 

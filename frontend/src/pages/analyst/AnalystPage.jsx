@@ -10,11 +10,15 @@ import RefreshIcon from '@mui/icons-material/Refresh'
 import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver'
 import SmartToyIcon from '@mui/icons-material/SmartToy'
 import InboxIcon from '@mui/icons-material/Inbox'
+import TaskAltIcon from '@mui/icons-material/TaskAlt'
+import PendingActionsIcon from '@mui/icons-material/PendingActions'
+import ForumIcon from '@mui/icons-material/Forum'
+import EditNoteIcon from '@mui/icons-material/EditNote'
 import CloseIcon from '@mui/icons-material/Close'
 import { api } from '../../services/api'
 import { useApi } from '../../hooks/useApi'
 import { useInfiniteScroll, usePagedList } from '../../hooks/usePagedList'
-import { Panel, StatusChip, Chip, ErrorBox, Spinner, Empty, Explain } from '../../components/ui'
+import { Panel, Stat, StatusChip, Chip, ErrorBox, Spinner, Empty, Explain } from '../../components/ui'
 import { num } from '../../format'
 import { COLOR } from '../../theme'
 
@@ -26,6 +30,7 @@ export default function AnalystPage() {
   const [selected, setSelected] = useState(null)
   const { data: cats } = useApi(() => api.configCategories(), [])
   const { data: states } = useApi(() => api.states(), [])
+  const { data: perf } = useApi(() => api.aiPerformance(), [])
   const districts = states?.find((s) => s.is_default)?.districts || []
   const scrollBox = useRef(null)
   // `filters` is a fresh object each render, so the serialised form is what should drive the fetch.
@@ -48,12 +53,29 @@ export default function AnalystPage() {
         </h1>
         <div className="mt-1.5 max-w-3xl">
           <Explain>
-            Gemini proposes a category, location and urgency for every message; it never decides. Anything below 0.60
-            confidence, with an unresolved district, or in an unsupported language lands here for a human.
+            Gemini proposes a category, location and urgency for every message; it never decides. Most messages clear
+            its confidence bar and are accepted automatically — this screen is the minority that does not. Anything below
+            0.60 confidence, with an unresolved district, or in an unsupported language waits here for a human.
             Approving, correcting or rejecting writes the old value, the new value, your ID and your reason to the audit trail.
           </Explain>
         </div>
       </header>
+
+      {perf?.operational && (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <Stat icon={ForumIcon} label="Messages processed" value={num(perf.operational.with_ai_output)}
+            sub={`${num(perf.operational.total_requests)} received in the pilot`} />
+          <Stat icon={TaskAltIcon} label="Accepted automatically"
+            value={`${Math.round((perf.operational.with_ai_output - perf.operational.review_required) / perf.operational.with_ai_output * 100)}%`}
+            sub={`${num(perf.operational.with_ai_output - perf.operational.review_required)} cleared the confidence bar`} />
+          <Stat icon={PendingActionsIcon} label="Waiting for a human"
+            value={`${Math.round(perf.operational.review_required / perf.operational.with_ai_output * 100)}%`}
+            sub={`${num(perf.operational.review_required)} in this queue — the work below`} />
+          <Stat icon={EditNoteIcon} label="Corrected by an analyst"
+            value={perf.operational.correction_rate === null ? '—' : `${Math.round(perf.operational.correction_rate * 100)}%`}
+            sub="of the decisions made so far" />
+        </div>
+      )}
 
       <Panel icon={FilterAltIcon} title="Filters" actions={<Chip>{num(total)} matching</Chip>}>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -76,7 +98,7 @@ export default function AnalystPage() {
       <ErrorBox error={error} />
 
       <div className={`grid gap-4 ${selected ? 'xl:grid-cols-[1.35fr_1fr]' : 'grid-cols-1'}`}>
-        <Panel title="Requests" explain="Confidence is Gemini's own estimate that the category, location and urgency are right. Click any row to review it beside the citizen's original words.">
+        <Panel title="Requests" explain="Confidence is Gemini's own estimate that the category, location and urgency are right — not an error rate. A low number means the model is unsure and asked for a person, which is the behaviour you want. Click any row to review it beside the citizen's original words.">
           {loading ? <Spinner /> : !items.length ? <Empty icon={InboxIcon}>No requests match these filters.</Empty> : (
             <div ref={scrollBox} className="-m-4 max-h-[68vh] overflow-auto">
               <table className="w-full text-left text-sm">
@@ -102,7 +124,7 @@ export default function AnalystPage() {
                       <td className="py-2 pr-3" style={{ color: COLOR.ink2 }}>{r.category_code || '—'}</td>
                       <td className="py-2 pr-3" style={{ color: COLOR.ink2 }}>{r.resolved_geo?.name || '—'}</td>
                       <td className="tnum py-2 pr-3 text-right" style={{ color: COLOR.ink2 }}>{r.urgency_score ?? '—'}</td>
-                      <td className="tnum py-2 pr-3 text-right" style={{ color: r.ai_confidence < 0.6 ? COLOR.critical : COLOR.ink2 }}>
+                      <td className="tnum py-2 pr-3 text-right" style={{ color: COLOR.ink2 }}>
                         {r.ai_confidence?.toFixed(2) ?? '—'}
                       </td>
                       <td className="py-2 pr-4">
