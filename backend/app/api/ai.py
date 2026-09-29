@@ -100,6 +100,9 @@ def performance(db: Session = Depends(get_db), user: User = Depends(require_role
                 CitizenRequest.processing_status == ProcessingStatus.FAILED).count(),
             "avg_confidence": round(float(processed.with_entities(func.avg(CitizenRequest.ai_confidence)).scalar() or 0), 3),
             "confidence_bands": bands,
+            "by_model": dict(db.query(CitizenRequest.ai_model, func.count())
+                             .filter(CitizenRequest.ai_model.isnot(None))
+                             .group_by(CitizenRequest.ai_model).all()),
             "by_language": by_lang,
             "analyst_decisions": reviewed,
             "correction_rate": round(corrections / decided, 3) if decided else None,

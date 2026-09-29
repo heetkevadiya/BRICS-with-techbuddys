@@ -182,7 +182,7 @@ def main(n: int) -> None:
             if cl is None:
                 cl = RequestCluster(name=sub.capitalize(), category_code=cat, geo_id=g.id, representative_problem=problem_en, centroid=vectors[(cat, sub)])
                 db.add(cl); db.flush(); clusters[key] = cl
-            conf = round(rng.uniform(0.78, 0.97), 2) if rng.random() > 0.06 else round(rng.uniform(0.4, 0.59), 2)
+            conf = round(rng.uniform(0.31, 0.59), 2) if rng.random() < 0.06 else round(0.60 + 0.39 * rng.random() ** 0.45, 2)
             req = CitizenRequest(
                 tracking_code=new_tracking_code(), channel=pick(CHANNELS), original_text=text, declared_language=None if rng.random() < 0.5 else lang,
                 citizen_hash=citizen_hash(rng.choice(citizens)), submitted_geo_id=g.id if rng.random() < 0.7 else None, submitted_at=submitted,
