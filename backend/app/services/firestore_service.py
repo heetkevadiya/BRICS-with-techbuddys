@@ -30,7 +30,7 @@ _status_cache: tuple[float, dict] | None = None
 
 
 def configured() -> bool:
-    return bool(settings.google_cloud_project and settings.credentials_path)
+    return bool(settings.google_cloud_project)
 
 
 @lru_cache(maxsize=1)

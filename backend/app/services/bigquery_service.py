@@ -32,7 +32,7 @@ TABLES = {
 
 def configured() -> bool:
     """Credentials and a project are present. Says nothing about whether they work."""
-    return bool(settings.google_cloud_project and settings.credentials_path)
+    return bool(settings.google_cloud_project)
 
 
 # A live round-trip costs ~1s, and two dashboard pages ask on every load. The answer changes only
