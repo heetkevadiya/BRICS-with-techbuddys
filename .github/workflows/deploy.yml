@@ -1,0 +1,67 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+env:
+  PROJECT_ID: brics-citizen-demand
+  REGION: asia-south1
+  SERVICE: brics-api
+
+jobs:
+  backend:
+    name: Cloud Run
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Deploy the API
+        working-directory: backend
+        run: |
+          gcloud run deploy "$SERVICE" \
+            --source . \
+            --project "$PROJECT_ID" \
+            --region "$REGION" \
+            --quiet
+
+  frontend:
+    name: Firebase Hosting
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Build
+        working-directory: frontend
+        env:
+          VITE_API_URL: ""
+          VITE_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_GOOGLE_MAPS_API_KEY }}
+          VITE_FIREBASE_API_KEY: AIzaSyDBAWnzTeCL0sVSD_lUnma32KRAdEYfOZg
+          VITE_FIREBASE_AUTH_DOMAIN: brics-citizen-demand.firebaseapp.com
+          VITE_FIREBASE_PROJECT_ID: brics-citizen-demand
+          VITE_FIREBASE_STORAGE_BUCKET: brics-citizen-demand.firebasestorage.app
+          VITE_FIREBASE_MESSAGING_SENDER_ID: "459733078827"
+          VITE_FIREBASE_APP_ID: "1:459733078827:web:3ca0120b125e6ca5b86b6e"
+        run: |
+          npm ci
+          npm run build
+
+      - uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Deploy the site
+        run: npx firebase-tools@latest deploy --only hosting --project "$PROJECT_ID" --non-interactive
