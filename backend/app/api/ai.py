@@ -25,13 +25,13 @@ REPORT = Path(__file__).resolve().parents[2] / "data" / "eval" / "extraction_rep
 
 # What each Google AI service does in this platform, and what it is deliberately NOT allowed to do.
 PIPELINE = [
-    {"step": "Language detection & translation", "service": "Gemini 2.5 Flash",
+    {"step": "Language detection & translation", "service": "Gemini 3.8 Flash",
      "does": "Identifies the citizen's language, including code-mixed Hinglish, and produces a faithful English translation.",
      "never": "The original message is stored unchanged and shown beside every AI field."},
     {"step": "Speech-to-text", "service": "Cloud Speech-to-Text (Chirp)",
      "does": "Transcribes voice messages in Indian languages. Falls back to Gemini's native audio understanding.",
      "never": "Audio is kept so a failed transcription can be retried or done by a human."},
-    {"step": "Structured extraction", "service": "Gemini 2.5 Flash, JSON schema mode",
+    {"step": "Structured extraction", "service": "Gemini 3.8 Flash, JSON schema mode",
      "does": "Category, sub-category, problem statement, urgency 1–10, location mention, entities, self-reported confidence.",
      "never": "Output is validated by Pydantic; anything below 0.60 confidence goes to an analyst."},
     {"step": "Clustering", "service": "Gemini Embedding",
@@ -40,7 +40,7 @@ PIPELINE = [
     {"step": "Priority score", "service": "None — deterministic Python",
      "does": "0.30 demand + 0.25 infrastructure gap + 0.20 population impact + 0.15 urgency + 0.10 policy alignment.",
      "never": "No model is involved. The same inputs always produce the same score."},
-    {"step": "Explanation", "service": "Gemini 2.5 Flash",
+    {"step": "Explanation", "service": "Gemini 3.8 Flash",
      "does": "Writes a three-sentence briefing from the evidence dictionary.",
      "never": "It receives only the computed evidence and cannot change a single number."},
 ]

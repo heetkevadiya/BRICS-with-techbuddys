@@ -30,7 +30,7 @@ const LOOP = [
 ]
 
 const STACK = [
-  ['Gemini 2.5 Flash', 'understands every message'],
+  ['Gemini 3.8 Flash', 'understands every message'],
   ['Gemini Embedding', 'groups reports of one issue'],
   ['Cloud Speech-to-Text', 'transcribes voice notes'],
   ['Cloud Translation', 'serves 14 Indian languages'],
@@ -205,7 +205,7 @@ function LiveExtraction() {
 
         <div className="flex items-center gap-2">
           <SouthIcon sx={{ fontSize: 15, color: COLOR.seq[3] }} />
-          <span className="text-xs font-semibold" style={{ color: COLOR.seq[4] }}>Gemini 2.5 Flash</span>
+          <span className="text-xs font-semibold" style={{ color: COLOR.seq[4] }}>Gemini 3.8 Flash</span>
           <span className="h-px flex-1" style={{ background: COLOR.grid }} />
         </div>
 

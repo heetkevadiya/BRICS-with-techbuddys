@@ -149,7 +149,7 @@ export default function AiPage() {
 
       {compare && (
         <Panel icon={PaidIcon} title="A cost decision, measured rather than assumed"
-          explain="Gemini 2.5 can spend reasoning tokens before answering. For structured extraction it changed no categorical outcome and was marginally worse on urgency, so it is switched off — a large saving at no accuracy cost.">
+          explain="Gemini 3.8 can spend reasoning tokens before answering. For structured extraction it changed no categorical outcome, cost one district match, and was 3.7x the price — so it is switched off.">
           <div className="overflow-x-auto">
           <table className="w-full min-w-[340px] text-left text-sm">
             <thead className="text-xs uppercase" style={{ color: COLOR.muted }}>

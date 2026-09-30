@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.models import CitizenRequest, ProcessingStatus
-from app.services import clustering_service, extraction_service, speech_service
+from app.services import clustering_service, extraction_service, speech_service, firestore_service
 from app.services.ai import gemini_client
 from app.utils.geo import GeoResolver
 
@@ -37,6 +37,7 @@ def process_request(db: Session, request_id: int) -> CitizenRequest:
         req.processing_error = str(e)[:2000]
     req.processed_at = datetime.now(timezone.utc)
     db.commit()
+    firestore_service.publish(req)
     return req
 
 

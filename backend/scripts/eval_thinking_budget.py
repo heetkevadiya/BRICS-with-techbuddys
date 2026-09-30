@@ -21,7 +21,7 @@ from app.schemas.ai import ExtractionResult
 from app.services.ai import gemini_client
 from app.services.extraction_service import SYSTEM, _category_block
 
-PRICE_IN, PRICE_OUT = 0.30, 2.50  # USD per 1M tokens, Gemini 2.5 Flash
+PRICE_IN, PRICE_OUT = 0.30, 2.50  # USD per 1M tokens, Gemini Flash
 CASES = json.loads((Path(__file__).resolve().parents[1] / "tests" / "eval" / "extraction_cases.json").read_text())
 
 ap = argparse.ArgumentParser()
