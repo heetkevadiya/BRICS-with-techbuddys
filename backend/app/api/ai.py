@@ -16,7 +16,7 @@ from app.api.deps import User, require_role
 from app.core.config import settings
 from app.db.session import get_db
 from app.models import CitizenRequest, ProcessingStatus, Verification, VerificationAction
-from app.services import bigquery_service as bq
+from app.services import bigquery_service as bq, firestore_service
 from app.services import speech_service
 from app.services.ai import gemini_client
 
@@ -87,7 +87,8 @@ def performance(db: Session = Depends(get_db), user: User = Depends(require_role
         "services": {
             "gemini": bool(settings.gemini_api_key),
             "cloud_speech_to_text": speech_service.cloud_stt_available(),
-            "cloud_translation": settings.credentials_path is not None,
+            "cloud_translation": bool(settings.credentials_path or settings.google_cloud_project),
+            "firestore_live_feed": firestore_service.status()["live"],
             "bigquery": bq.status()["live"],
         },
         "evaluation": json.loads(REPORT.read_text()) if REPORT.exists() else None,

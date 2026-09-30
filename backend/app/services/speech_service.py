@@ -14,7 +14,8 @@ _LANG_HINTS = {"gu": "gu-IN", "hi": "hi-IN", "en": "en-IN", "mr": "mr-IN", "ta":
 
 
 def cloud_stt_available() -> bool:
-    return settings.credentials_path is not None
+    """A key file locally, or the ambient credentials Cloud Run provides."""
+    return bool(settings.credentials_path or settings.google_cloud_project)
 
 
 def transcribe_with_cloud_stt(audio: bytes, mime: str, language: str | None) -> tuple[str, str]:
