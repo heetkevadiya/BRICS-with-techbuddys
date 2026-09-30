@@ -1,0 +1,19 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // The live feed is public on purpose: it carries no citizen text, no phone number and no
+    // citizen identifier — only district, category, urgency, language, channel and timestamp.
+    // Only the backend service account writes to it, and server credentials bypass these rules.
+    match /live_feed/{document} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Nothing else is reachable from a browser.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

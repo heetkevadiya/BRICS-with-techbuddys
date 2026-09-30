@@ -17,7 +17,10 @@ google-genai==2.24.0
 google-cloud-speech==2.29.0
 google-cloud-translate==3.18.0
 google-cloud-texttospeech==2.23.0
+google-cloud-firestore==2.27.0
 google-cloud-bigquery==3.27.0
+pyarrow==25.0.1
+db-dtypes==1.7.1
 firebase-admin==6.6.0
 
 # data & geometry
