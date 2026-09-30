@@ -28,6 +28,7 @@ import { Panel, Stat, StatusChip, QuadrantChip, Chip, ScoreBar, Spinner, ErrorBo
 import { inr, num } from '../../format'
 import ChartTooltip from '../../components/Tooltip'
 import DistrictMap from '../../components/DistrictMap'
+import LiveFeed from '../../components/LiveFeed'
 import { COLOR, REC_TYPE, diverging } from '../../theme'
 
 export default function PolicymakerPage() {
@@ -144,6 +145,8 @@ export default function PolicymakerPage() {
         </Panel>
 
         <div className="space-y-4">
+          <LiveFeed />
+
           <Panel icon={AccountBalanceIcon} title="Is the money going where the need is?"
             explain="Each dot is one district in one sector. Right = citizens report more per head. Up = more rupees budgeted per head. Colour is the gap between those two ranks: red means demand outruns spending, blue means spending outruns demand.">
             {scatter.length === 0 ? (
