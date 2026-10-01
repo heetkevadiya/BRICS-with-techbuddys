@@ -12,6 +12,9 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome'
 import SouthIcon from '@mui/icons-material/South'
 import CloudQueueIcon from '@mui/icons-material/CloudQueue'
+import WhatsAppIcon from '@mui/icons-material/WhatsApp'
+import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive'
+import SupportAgentIcon from '@mui/icons-material/SupportAgent'
 import { api } from '../../services/api'
 import { useApi } from '../../hooks/useApi'
 import { Panel, Spinner } from '../../components/ui'
@@ -40,6 +43,18 @@ const STACK = [
   ['Firestore', 'carries the live feed of new reports'],
   ['Cloud Run', 'runs the API'],
   ['Firebase Hosting', 'serves this site'],
+]
+
+const NEXT = [
+  { icon: NotificationsActiveIcon, title: 'WhatsApp alert when a report is high-risk',
+    body: 'When Gemini returns urgency 9–10 on a safety category — a collapsed road, contaminated water, an unlit crossing — the district reviewer gets a WhatsApp message in seconds instead of finding it in a queue the next morning.',
+    rests: 'The urgency score, the risk categories and the review queue already run. This adds delivery.' },
+  { icon: WhatsAppIcon, title: 'WhatsApp status updates for the citizen',
+    body: 'Today a tracking code is the only way to find out what happened, and the citizen has to come back and ask. The same update would be pushed to them when the status changes — understood, grouped with others, accepted into a plan.',
+    rests: 'The phone number is deliberately stored as a one-way hash, so this needs a separate opt-in contact store kept apart from the analysis data.' },
+  { icon: SupportAgentIcon, title: 'A voice agent that talks with the citizen',
+    body: 'A voice note is transcribed in one shot today. A conversational agent would call back, ask what is wrong, ask the follow-up a form cannot — which road, since when, how many households — and confirm the district out loud. The people least served by a web form would be served best.',
+    rests: 'WHATSAPP, SMS and IVR are already channels in the data model; the pipeline does not care which one a message arrives on.' },
 ]
 
 export default function HomePage() {
@@ -134,6 +149,24 @@ export default function HomePage() {
           <Door to="/ai" icon={PsychologyIcon} title="Check the AI"
             body="Measured accuracy per language, confidence distribution, cost per request, and what each Google service is allowed to do." cta="See the numbers" />
         </div>
+
+        <Panel title="What comes next"
+          actions={<span className="rounded-full px-2.5 py-1 text-xs font-semibold uppercase tracking-wide"
+            style={{ background: `${COLOR.warning}1f`, color: '#8a6100' }}>Planned · not built</span>}
+          explain="None of this is built yet — it is listed here so the line between what runs today and what is planned stays visible. Each one closes the same gap: the loop ends when a policymaker decides, and the citizen is never told.">
+          <ol className="grid gap-3 lg:grid-cols-3">
+            {NEXT.map(({ icon: Icon, title, body, rests }) => (
+              <li key={title} className="flex flex-col rounded-lg border p-3" style={{ borderColor: COLOR.grid, background: COLOR.page }}>
+                <div className="flex items-start gap-2">
+                  <Icon sx={{ fontSize: 18, color: COLOR.muted, mt: '2px', flexShrink: 0 }} />
+                  <span className="text-sm font-semibold" style={{ color: COLOR.ink }}>{title}</span>
+                </div>
+                <p className="mt-1.5 text-sm leading-relaxed" style={{ color: COLOR.ink2 }}>{body}</p>
+                <p className="mt-auto border-t pt-2 text-xs leading-relaxed" style={{ borderColor: COLOR.grid, color: COLOR.muted }}>{rests}</p>
+              </li>
+            ))}
+          </ol>
+        </Panel>
 
         <Panel title="The three rules this is built on">
           <div className="grid gap-4 text-sm sm:grid-cols-3">

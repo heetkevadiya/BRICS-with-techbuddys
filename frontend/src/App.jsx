@@ -97,7 +97,6 @@ export default function App() {
             <span className="flex flex-wrap items-center gap-4">
               <Link to="/home" className="hover:underline">Overview</Link>
               <Link to="/ai" className="hover:underline">AI accuracy</Link>
-              <a href={`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/docs`} target="_blank" rel="noreferrer" className="hover:underline">API docs</a>
               <span>Build with AI: Code for Communities 2026</span>
             </span>
           </div>
