@@ -37,7 +37,9 @@ const STACK = [
   ['BigQuery', 'holds the national tables'],
   ['Google Maps Platform', 'draws the district map'],
   ['Firebase Auth', 'verifies ID tokens on guarded routes'],
+  ['Firestore', 'carries the live feed of new reports'],
   ['Cloud Run', 'runs the API'],
+  ['Firebase Hosting', 'serves this site'],
 ]
 
 export default function HomePage() {
