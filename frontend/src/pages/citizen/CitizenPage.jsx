@@ -1,6 +1,6 @@
 /** Citizen interface — the only screen an ordinary person sees.
  *  Everything here is in the citizen's own language: labels, placeholder, acknowledgement and status. */
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import MicIcon from '@mui/icons-material/Mic'
 import StopCircleIcon from '@mui/icons-material/StopCircle'
 import SendIcon from '@mui/icons-material/Send'
@@ -112,6 +112,14 @@ export default function CitizenPage() {
   const [recording, setRecording] = useState(false)
   const [code, setCode] = useState('')
   const recorder = useRef(null)
+
+  useEffect(() => () => {
+    const mr = recorder.current
+    if (!mr || mr.state === 'inactive') return
+    mr.onstop = null
+    mr.stop()
+    mr.stream?.getTracks().forEach((track) => track.stop())
+  }, [])
 
   const { data: langs } = useApi(() => api.languages(), [])
   const { data: states } = useApi(() => api.states(), [])

@@ -1,5 +1,6 @@
 /** App shell. Three audiences, three screens; the tab also sets the demo role sent to the API.
  *  In production a Firebase ID token carries the role instead and this switcher disappears. */
+import { Suspense, lazy } from 'react'
 import { BrowserRouter, Link, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import HomeIcon from '@mui/icons-material/Home'
 import PersonIcon from '@mui/icons-material/Person'
@@ -8,12 +9,16 @@ import PsychologyIcon from '@mui/icons-material/Psychology'
 import FactCheckIcon from '@mui/icons-material/FactCheck'
 import InsightsIcon from '@mui/icons-material/Insights'
 import { getRole } from './services/api'
-import HomePage from './pages/home/HomePage'
-import CitizenPage from './pages/citizen/CitizenPage'
-import AiPage from './pages/ai/AiPage'
-import AnalystPage from './pages/analyst/AnalystPage'
-import PolicymakerPage from './pages/policymaker/PolicymakerPage'
+import ErrorBoundary from './components/ErrorBoundary'
+import { Spinner } from './components/ui'
 import { COLOR } from './theme'
+
+const HomePage = lazy(() => import('./pages/home/HomePage'))
+const CitizenPage = lazy(() => import('./pages/citizen/CitizenPage'))
+const AiPage = lazy(() => import('./pages/ai/AiPage'))
+const AnalystPage = lazy(() => import('./pages/analyst/AnalystPage'))
+const PolicymakerPage = lazy(() => import('./pages/policymaker/PolicymakerPage'))
+const CallPage = lazy(() => import('./pages/call/CallPage'))
 
 const TABS = [
   { to: '/citizen', label: 'Citizen', icon: CampaignIcon, blurb: 'report a problem' },
@@ -81,15 +86,20 @@ export default function App() {
     <BrowserRouter>
       <div className="min-h-screen" style={{ background: COLOR.page, color: COLOR.ink }}>
         <Nav />
-        <Routes>
-          <Route path="/" element={<Navigate to="/home" replace />} />
-          <Route path="/home" element={<HomePage />} />
-          <Route path="/ai" element={<AiPage />} />
-          <Route path="/citizen" element={<CitizenPage />} />
-          <Route path="/analyst" element={<AnalystPage />} />
-          <Route path="/policymaker" element={<PolicymakerPage />} />
-          <Route path="*" element={<Navigate to="/home" replace />} />
-        </Routes>
+        <ErrorBoundary>
+          <Suspense fallback={<Spinner label="Loading…" />}>
+            <Routes>
+              <Route path="/" element={<Navigate to="/home" replace />} />
+              <Route path="/home" element={<HomePage />} />
+              <Route path="/ai" element={<AiPage />} />
+              <Route path="/citizen" element={<CitizenPage />} />
+              <Route path="/analyst" element={<AnalystPage />} />
+              <Route path="/policymaker" element={<PolicymakerPage />} />
+              <Route path="/call" element={<CallPage />} />
+              <Route path="*" element={<Navigate to="/home" replace />} />
+            </Routes>
+          </Suspense>
+        </ErrorBoundary>
         <footer className="mt-4 border-t bg-white" style={{ borderColor: COLOR.grid }}>
           <div className="mx-auto flex max-w-[1500px] flex-wrap items-center justify-between gap-3 px-4 py-6 text-xs"
             style={{ color: COLOR.muted }}>

@@ -52,7 +52,7 @@ const NEXT = [
   { icon: WhatsAppIcon, title: 'WhatsApp status updates for the citizen',
     body: 'Today a tracking code is the only way to find out what happened, and the citizen has to come back and ask. The same update would be pushed to them when the status changes — understood, grouped with others, accepted into a plan.',
     rests: 'The phone number is deliberately stored as a one-way hash, so this needs a separate opt-in contact store kept apart from the analysis data.' },
-  { icon: SupportAgentIcon, title: 'A voice agent that talks with the citizen',
+  { icon: SupportAgentIcon, to: '/call', title: 'A voice agent that talks with the citizen',
     body: 'A voice note is transcribed in one shot today. A conversational agent would call back, ask what is wrong, ask the follow-up a form cannot — which road, since when, how many households — and confirm the district out loud. The people least served by a web form would be served best.',
     rests: 'WHATSAPP, SMS and IVR are already channels in the data model; the pipeline does not care which one a message arrives on.' },
 ]
@@ -155,7 +155,7 @@ export default function HomePage() {
             style={{ background: `${COLOR.warning}1f`, color: '#8a6100' }}>Planned · not built</span>}
           explain="None of this is built yet — it is listed here so the line between what runs today and what is planned stays visible. Each one closes the same gap: the loop ends when a policymaker decides, and the citizen is never told.">
           <ol className="grid gap-3 lg:grid-cols-3">
-            {NEXT.map(({ icon: Icon, title, body, rests }) => (
+            {NEXT.map(({ icon: Icon, to, title, body, rests }) => (
               <li key={title} className="flex flex-col rounded-lg border p-3" style={{ borderColor: COLOR.grid, background: COLOR.page }}>
                 <div className="flex items-start gap-2">
                   <Icon sx={{ fontSize: 18, color: COLOR.muted, mt: '2px', flexShrink: 0 }} />
@@ -163,6 +163,12 @@ export default function HomePage() {
                 </div>
                 <p className="mt-1.5 text-sm leading-relaxed" style={{ color: COLOR.ink2 }}>{body}</p>
                 <p className="mt-auto border-t pt-2 text-xs leading-relaxed" style={{ borderColor: COLOR.grid, color: COLOR.muted }}>{rests}</p>
+                {to && (
+                  <Link to={to} className="mt-2 inline-flex items-center gap-1 text-xs font-semibold hover:underline"
+                    style={{ color: COLOR.seq[4] }}>
+                    See the design <ArrowForwardIcon sx={{ fontSize: 14 }} />
+                  </Link>
+                )}
               </li>
             ))}
           </ol>

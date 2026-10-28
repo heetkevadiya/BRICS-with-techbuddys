@@ -45,3 +45,46 @@ body {
 
 /* tabular figures everywhere a number is compared down a column */
 .tnum { font-variant-numeric: tabular-nums; }
+
+/* ── Voice-call walkthrough ───────────────────────────────────────────────── */
+@keyframes ringPulse {
+  0%   { transform: scale(1);    opacity: 0.55; }
+  70%  { transform: scale(1.9);  opacity: 0; }
+  100% { transform: scale(1.9);  opacity: 0; }
+}
+@keyframes bubbleIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes slotIn {
+  from { opacity: 0; transform: translateX(-6px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes wave {
+  0%, 100% { transform: scaleY(0.28); }
+  50%      { transform: scaleY(1); }
+}
+@keyframes growBar {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+.ring-pulse::before,
+.ring-pulse::after {
+  content: ""; position: absolute; inset: 0; border-radius: 9999px;
+  border: 2px solid currentColor; animation: ringPulse 2s ease-out infinite;
+}
+.ring-pulse::after { animation-delay: 1s; }
+
+.bubble-in { animation: bubbleIn 0.32s ease-out both; }
+.slot-in   { animation: slotIn 0.3s ease-out both; }
+.wave-bar  { transform-origin: center; animation: wave 0.85s ease-in-out infinite; }
+.grow-bar  { transform-origin: left; animation: growBar 0.7s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ring-pulse::before, .ring-pulse::after,
+  .bubble-in, .slot-in, .wave-bar, .grow-bar {
+    animation: none;
+  }
+  .grow-bar { transform: none; }
+}
